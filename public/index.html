@@ -1472,13 +1472,13 @@
 
     function loadEmbedFrame(url) {
       const embedFrame = document.getElementById('embedFrame');
-      // Prohibir terminantemente popups, redirects a nuevas pestañas y navegación exterior
-      embedFrame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+      // Eliminamos sandbox para evitar "This video is not available due to sandboxed iframe!"
+      embedFrame.removeAttribute('sandbox');
       applyPopupGuard(window);
       embedFrame.src = 'about:blank';
       setTimeout(() => {
         try { applyPopupGuard(embedFrame.contentWindow); } catch(e){}
-        embedFrame.setAttribute('sandbox', 'allow-scripts allow-same-origin allow-forms allow-presentation');
+        embedFrame.removeAttribute('sandbox');
         embedFrame.src = url;
       }, 80);
     }
