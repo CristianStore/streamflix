@@ -277,28 +277,33 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
   }
 
   // Si encontramos servidores Latino, intentar extraer el flujo HLS nativo (.m3u8 directo) de VidHide
-  const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')));
-  if (latVidhide && latVidhide.embedUrl) {
-    try {
-      const directM3u8 = await extractVidhideStream(latVidhide.embedUrl);
-      if (directM3u8) {
-        allResults.unshift({
-          id: 'cuevana-lat-direct-1',
-          server: 'HLS Nativo',
-          name: '🇲🇽 Servidor Latino Nativo (1080p Sin Anuncios)',
-          quality: 'HD 1080p',
-          language: 'Español Latino',
-          audio: 'Latino',
-          format: 'm3u8',
-          isDirect: true,
-          url: directM3u8,
-          embedUrl: directM3u8,
-          directEmbedUrl: directM3u8,
-          isLatino: true,
-          priority: 0.1
-        });
-      }
-    } catch (_) {}
+  // NOTA: acek-cdn restringe los tokens extraídos a la IP de origen. En datacenters en la nube (como Render),
+  // la IP de Render no coincide con la IP del cliente residencial, por lo que se priorizan los embeds directos.
+  const isCloudServer = Boolean(process.env.RENDER || process.env.IS_CLOUD || process.env.ON_RENDER);
+  if (!isCloudServer) {
+    const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')));
+    if (latVidhide && latVidhide.embedUrl) {
+      try {
+        const directM3u8 = await extractVidhideStream(latVidhide.embedUrl);
+        if (directM3u8) {
+          allResults.unshift({
+            id: 'cuevana-lat-direct-1',
+            server: 'HLS Nativo',
+            name: '🇲🇽 Servidor Latino Nativo (1080p Sin Anuncios)',
+            quality: 'HD 1080p',
+            language: 'Español Latino',
+            audio: 'Latino',
+            format: 'm3u8',
+            isDirect: true,
+            url: directM3u8,
+            embedUrl: directM3u8,
+            directEmbedUrl: directM3u8,
+            isLatino: true,
+            priority: 0.1
+          });
+        }
+      } catch (_) {}
+    }
   }
 
   // Guardar en caché si se obtuvieron resultados
