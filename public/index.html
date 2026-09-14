@@ -1723,6 +1723,18 @@
 
       if (isDirectM3u8) {
         console.log(`[Player] Reproduciendo transmisión nativa HLS (${currentSrv.language || 'Latino'}):`, currentSrv.url);
+        if (fallbackTimer) clearTimeout(fallbackTimer);
+        fallbackTimer = setTimeout(() => {
+          if (!streamLoadedSuccessfully) {
+            console.warn(`[Fallback] Tiempo agotado en HLS nativo. Conmutando al siguiente servidor...`);
+            tryNextServer();
+          }
+        }, 8000);
+        hlsVideo.onplaying = () => {
+          if (fallbackTimer) clearTimeout(fallbackTimer);
+          streamLoadedSuccessfully = true;
+          hideStatusBanner();
+        };
         playVideoHls(currentSrv.url, title);
         serverSelector.style.display = 'flex';
         selectServerEl.value = currentSrv.id || `srv-${currentServerIndex}`;
@@ -1930,15 +1942,29 @@
           selectLatinAudioTrack(hlsInstance);
         });
         hlsInstance.on(Hls.Events.ERROR, (_, data) => {
-          if (!data.fatal || fallbackUrls.length === 0) return;
-          const nextUrl = fallbackUrls.shift();
-          if (!nextUrl) return;
-          hlsInstance.destroy();
-          playVideoHls(nextUrl, title, fallbackUrls);
+          if (!data.fatal) return;
+          console.warn('[HLS] Error fatal en la reproducción HLS:', data.type, data.details);
+          if (fallbackUrls && fallbackUrls.length > 0) {
+            const nextUrl = fallbackUrls.shift();
+            if (nextUrl) {
+              hlsInstance.destroy();
+              playVideoHls(nextUrl, title, fallbackUrls);
+              return;
+            }
+          }
+          if (currentServerCatalog && currentServerCatalog.length > 0) {
+            hlsInstance.destroy();
+            tryNextServer();
+          }
         });
       } else if (video.canPlayType('application/vnd.apple.mpegurl')) {
         video.src = m3u8Url;
         video.addEventListener('loadedmetadata', () => video.play());
+        video.addEventListener('error', () => {
+          if (currentServerCatalog && currentServerCatalog.length > 0) {
+            tryNextServer();
+          }
+        });
       }
     }
 
