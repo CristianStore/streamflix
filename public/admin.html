@@ -1,0 +1,644 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>StreamFlix - Panel de Control Administrativo</title>
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <style>
+    :root {
+      --bg: #121212;
+      --card-bg: #1e1e1e;
+      --primary: #E50914;
+      --primary-hover: #b20710;
+      --text: #ffffff;
+      --text-muted: #888888;
+      --border: rgba(255,255,255,0.1);
+      --success: #28a745;
+      --danger: #dc3545;
+    }
+
+    * {
+      box-sizing: border-box;
+      margin: 0;
+      padding: 0;
+      font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, sans-serif;
+    }
+
+    body {
+      background-color: var(--bg);
+      color: var(--text);
+      min-height: 100vh;
+      display: flex;
+      flex-direction: column;
+    }
+
+    /* Barra Superior */
+    header {
+      background: #181818;
+      border-bottom: 1px solid var(--border);
+      padding: 16px 32px;
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+    }
+
+    .brand {
+      color: var(--primary);
+      font-size: 22px;
+      font-weight: 900;
+      letter-spacing: 1.5px;
+      display: flex;
+      align-items: center;
+      gap: 10px;
+    }
+
+    .nav-links {
+      display: flex;
+      gap: 16px;
+      align-items: center;
+    }
+
+    .btn {
+      padding: 8px 16px;
+      border-radius: 6px;
+      font-weight: 600;
+      font-size: 14px;
+      cursor: pointer;
+      border: none;
+      display: inline-flex;
+      align-items: center;
+      gap: 8px;
+      transition: all 0.2s;
+    }
+
+    .btn-primary {
+      background: var(--primary);
+      color: white;
+    }
+    .btn-primary:hover {
+      background: var(--primary-hover);
+    }
+
+    .btn-outline {
+      background: transparent;
+      border: 1px solid var(--border);
+      color: white;
+    }
+    .btn-outline:hover {
+      background: rgba(255,255,255,0.1);
+    }
+
+    .btn-danger {
+      background: var(--danger);
+      color: white;
+    }
+
+    .btn-success {
+      background: var(--success);
+      color: white;
+    }
+
+    /* Contenedor Principal */
+    .container {
+      max-width: 1200px;
+      margin: 30px auto;
+      padding: 0 20px;
+      width: 100%;
+      flex: 1;
+    }
+
+    /* Pestañas */
+    .tabs {
+      display: flex;
+      gap: 12px;
+      border-bottom: 1px solid var(--border);
+      margin-bottom: 24px;
+    }
+
+    .tab-btn {
+      padding: 12px 20px;
+      background: transparent;
+      color: var(--text-muted);
+      border: none;
+      border-bottom: 3px solid transparent;
+      font-size: 15px;
+      font-weight: bold;
+      cursor: pointer;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .tab-btn.active {
+      color: var(--primary);
+      border-bottom-color: var(--primary);
+    }
+
+    .tab-content {
+      display: none;
+    }
+    .tab-content.active {
+      display: block;
+    }
+
+    /* Tarjetas y Tablas */
+    .card {
+      background: var(--card-bg);
+      border-radius: 8px;
+      border: 1px solid var(--border);
+      padding: 24px;
+      margin-bottom: 24px;
+    }
+
+    .card-title {
+      font-size: 18px;
+      margin-bottom: 16px;
+      display: flex;
+      align-items: center;
+      gap: 8px;
+    }
+
+    .grid-form {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+      gap: 16px;
+      margin-bottom: 16px;
+    }
+
+    .form-group {
+      display: flex;
+      flex-direction: column;
+      gap: 6px;
+    }
+
+    label {
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    input, textarea, select {
+      background: #282828;
+      border: 1px solid #383838;
+      border-radius: 6px;
+      padding: 10px 14px;
+      color: white;
+      font-size: 14px;
+      outline: none;
+    }
+    input:focus, textarea:focus, select:focus {
+      border-color: var(--primary);
+    }
+
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin-top: 12px;
+    }
+
+    th, td {
+      padding: 14px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border);
+      font-size: 14px;
+    }
+
+    th {
+      color: var(--text-muted);
+      font-weight: 600;
+      background: #181818;
+    }
+
+    .badge {
+      padding: 4px 8px;
+      border-radius: 4px;
+      font-size: 12px;
+      font-weight: bold;
+      display: inline-block;
+    }
+
+    .badge-admin { background: #6f42c1; color: white; }
+    .badge-user { background: #17a2b8; color: white; }
+    .badge-active { background: rgba(40,167,69,0.2); color: #28a745; border: 1px solid #28a745; }
+    .badge-blocked { background: rgba(220,53,69,0.2); color: #dc3545; border: 1px solid #dc3545; }
+
+    /* Modal de Login Admin */
+    .login-overlay {
+      display: none;
+      position: fixed;
+      inset: 0;
+      background: rgba(0,0,0,0.85);
+      z-index: 1000;
+      align-items: center;
+      justify-content: center;
+    }
+    .login-overlay.active {
+      display: flex;
+    }
+    .login-box {
+      background: #181818;
+      border: 1px solid var(--border);
+      padding: 32px;
+      border-radius: 12px;
+      width: 380px;
+    }
+  </style>
+</head>
+<body>
+
+  <header>
+    <div class="brand">
+      <i class="fa-solid fa-shield-halved"></i> STREAMFLIX ADMIN
+    </div>
+    <div class="nav-links">
+      <span id="adminUserTag" style="font-size:13px; color:var(--text-muted);">
+        <i class="fa-solid fa-user-lock"></i> <span id="adminUsername">Admin</span>
+      </span>
+      <a href="/" class="btn btn-outline"><i class="fa-solid fa-tv"></i> Ir a la App</a>
+      <button class="btn btn-outline" id="btnLogout"><i class="fa-solid fa-right-from-bracket"></i> Salir</button>
+    </div>
+  </header>
+
+  <div class="container">
+    <!-- Navegación por pestañas -->
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="catalog"><i class="fa-solid fa-film"></i> Catálogo de Medios</button>
+      <button class="tab-btn" data-tab="users"><i class="fa-solid fa-users"></i> Gestión de Usuarios</button>
+      <button class="tab-btn" data-tab="config"><i class="fa-solid fa-sliders"></i> Configuración Global</button>
+    </div>
+
+    <!-- Pestaña 1: Catálogo -->
+    <div class="tab-content active" id="tab-catalog">
+      <div class="card">
+        <h3 class="card-title"><i class="fa-solid fa-plus-circle"></i> Agregar o Modificar Título / Canal</h3>
+        <form id="movieForm">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>Título / Nombre del Canal</label>
+              <input type="text" id="mTitle" placeholder="Ej. Película 4K o Canal Deportivo" required>
+            </div>
+            <div class="form-group">
+              <label>URL del Stream HLS (.m3u8)</label>
+              <input type="url" id="mStream" placeholder="https://.../playlist.m3u8" required>
+            </div>
+            <div class="form-group">
+              <label>Póster (URL)</label>
+              <input type="url" id="mPoster" placeholder="https://image.tmdb.org/...">
+            </div>
+            <div class="form-group">
+              <label>Backdrop (URL)</label>
+              <input type="url" id="mBackdrop" placeholder="https://image.tmdb.org/...">
+            </div>
+            <div class="form-group">
+              <label>Tipo</label>
+              <select id="mType">
+                <option value="movie">Película</option>
+                <option value="series">Serie</option>
+                <option value="iptv">Canal en Vivo (IPTV)</option>
+              </select>
+            </div>
+            <div class="form-group">
+              <label>Categoría</label>
+              <input type="text" id="mCategory" placeholder="trending, movies, series o Noticias">
+            </div>
+            <div class="form-group">
+              <label>Calificación (0 - 10)</label>
+              <input type="number" id="mRating" step="0.1" value="8.0">
+            </div>
+            <div class="form-group" style="justify-content: center;">
+              <label><input type="checkbox" id="mFeatured"> Destacado en Banner Principal</label>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label>Sinopsis o Descripción</label>
+            <textarea id="mOverview" rows="2" placeholder="Resumen del título..."></textarea>
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-floppy-disk"></i> Guardar Título</button>
+        </form>
+      </div>
+
+      <div class="card">
+        <h3 class="card-title"><i class="fa-solid fa-list"></i> Títulos en el Catálogo</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>ID</th>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Categoría</th>
+              <th>Stream HLS</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="catalogTableBody">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pestaña 2: Usuarios -->
+    <div class="tab-content" id="tab-users">
+      <div class="card">
+        <h3 class="card-title"><i class="fa-solid fa-users-gear"></i> Usuarios Registrados</h3>
+        <table>
+          <thead>
+            <tr>
+              <th>Usuario</th>
+              <th>Correo Electrónico</th>
+              <th>Rol</th>
+              <th>Estado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody id="usersTableBody">
+            <!-- Dinámico -->
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <!-- Pestaña 3: Configuración -->
+    <div class="tab-content" id="tab-config">
+      <div class="card">
+        <h3 class="card-title"><i class="fa-solid fa-gear"></i> Parámetros de la Aplicación</h3>
+        <form id="configForm">
+          <div class="grid-form">
+            <div class="form-group">
+              <label>ID Título Destacado (Hero Banner)</label>
+              <input type="number" id="cfgHeroId" value="1">
+            </div>
+            <div class="form-group">
+              <label>Título Destacado</label>
+              <input type="text" id="cfgHeroTitle" value="Sintel">
+            </div>
+            <div class="form-group">
+              <label>Versión Mínima de la App</label>
+              <input type="text" id="cfgMinVersion" value="1.0.0">
+            </div>
+            <div class="form-group" style="justify-content: center;">
+              <label><input type="checkbox" id="cfgMaintenance"> Modo Mantenimiento</label>
+            </div>
+          </div>
+          <div class="form-group" style="margin-bottom: 16px;">
+            <label>URL Imagen del Banner Destacado</label>
+            <input type="url" id="cfgHeroBanner">
+          </div>
+          <button type="submit" class="btn btn-primary"><i class="fa-solid fa-save"></i> Guardar Cambios</button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- Modal de Login para Admin -->
+  <div class="login-overlay" id="adminLoginModal">
+    <div class="login-box">
+      <h3 style="margin-bottom: 16px; color:var(--primary);"><i class="fa-solid fa-lock"></i> Acceso Administrativo</h3>
+      <p style="font-size:13px; color:var(--text-muted); margin-bottom:20px;">Inicia sesión con tu cuenta de Administrador para acceder al panel.</p>
+      <form id="adminLoginForm">
+        <div class="form-group" style="margin-bottom:12px;">
+          <label>Usuario o Email</label>
+          <input type="text" id="admUser" value="admin" required>
+        </div>
+        <div class="form-group" style="margin-bottom:20px;">
+          <label>Contraseña</label>
+          <input type="password" id="admPass" value="1234" required>
+        </div>
+        <button type="submit" class="btn btn-primary" style="width:100%; justify-content:center;">Entrar al Panel</button>
+      </form>
+    </div>
+  </div>
+
+  <script>
+    let adminToken = localStorage.getItem('streamflix_token') || '';
+
+    // Manejo de pestañas
+    document.querySelectorAll('.tab-btn').forEach(btn => {
+      btn.addEventListener('click', () => {
+        document.querySelectorAll('.tab-btn').forEach(b => b.classList.remove('active'));
+        document.querySelectorAll('.tab-content').forEach(c => c.classList.remove('active'));
+        btn.classList.add('active');
+        document.getElementById(`tab-${btn.dataset.tab}`).classList.add('active');
+      });
+    });
+
+    async function checkAuth() {
+      if (!adminToken) {
+        document.getElementById('adminLoginModal').classList.add('active');
+        return false;
+      }
+      try {
+        const res = await fetch('/api/auth/profile', {
+          headers: { 'Authorization': `Bearer ${adminToken}` }
+        });
+        const data = await res.json();
+        if (data.success && data.user.role === 'admin') {
+          document.getElementById('adminUsername').innerText = data.user.username;
+          document.getElementById('adminLoginModal').classList.remove('active');
+          loadAllData();
+          return true;
+        } else {
+          alert('Tu cuenta no tiene privilegios de Administrador');
+          document.getElementById('adminLoginModal').classList.add('active');
+          return false;
+        }
+      } catch {
+        document.getElementById('adminLoginModal').classList.add('active');
+        return false;
+      }
+    }
+
+    document.getElementById('adminLoginForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const username = document.getElementById('admUser').value;
+      const password = document.getElementById('admPass').value;
+
+      const res = await fetch('/api/auth/login', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ username, password })
+      });
+      const data = await res.json();
+      if (data.success && data.user.role === 'admin') {
+        adminToken = data.token;
+        localStorage.setItem('streamflix_token', adminToken);
+        document.getElementById('adminLoginModal').classList.remove('active');
+        document.getElementById('adminUsername').innerText = data.user.username;
+        loadAllData();
+      } else {
+        alert(data.error || 'Credenciales inválidas o no eres administrador');
+      }
+    });
+
+    document.getElementById('btnLogout').addEventListener('click', () => {
+      localStorage.removeItem('streamflix_token');
+      adminToken = '';
+      location.reload();
+    });
+
+    function loadAllData() {
+      loadCatalog();
+      loadUsers();
+      loadConfig();
+    }
+
+    // Cargar Catálogo
+    async function loadCatalog() {
+      const res = await fetch('/api/movies');
+      const json = await res.json();
+      const tbody = document.getElementById('catalogTableBody');
+      tbody.innerHTML = '';
+
+      (json.data || []).forEach(item => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td>${item.id}</td>
+          <td><strong>${item.title}</strong></td>
+          <td><span class="badge ${item.type === 'movie' ? 'badge-user' : 'badge-admin'}">${item.type}</span></td>
+          <td>${item.category || '-'}</td>
+          <td><span style="font-size:11px; color:#aaa;">${(item.streamUrl || 'HLS Protegido')}</span></td>
+          <td>
+            <button class="btn btn-danger btn-sm" onclick="deleteMovie(${item.id})">
+              <i class="fa-solid fa-trash"></i> Eliminar
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    // Agregar / Editar Título
+    document.getElementById('movieForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        title: document.getElementById('mTitle').value,
+        streamUrl: document.getElementById('mStream').value,
+        poster: document.getElementById('mPoster').value,
+        backdrop: document.getElementById('mBackdrop').value,
+        type: document.getElementById('mType').value,
+        category: document.getElementById('mCategory').value,
+        rating: document.getElementById('mRating').value,
+        isFeatured: document.getElementById('mFeatured').checked,
+        overview: document.getElementById('mOverview').value
+      };
+
+      const res = await fetch('/api/admin/movies', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Título guardado correctamente');
+        document.getElementById('movieForm').reset();
+        loadCatalog();
+      } else {
+        alert(data.error);
+      }
+    });
+
+    async function deleteMovie(id) {
+      if (!confirm('¿Seguro que deseas eliminar este título?')) return;
+      const res = await fetch(`/api/admin/movies/${id}`, {
+        method: 'DELETE',
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadCatalog();
+      } else {
+        alert(data.error);
+      }
+    }
+
+    // Cargar Usuarios
+    async function loadUsers() {
+      const res = await fetch('/api/admin/users', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const json = await res.json();
+      const tbody = document.getElementById('usersTableBody');
+      tbody.innerHTML = '';
+
+      (json.data || []).forEach(user => {
+        const tr = document.createElement('tr');
+        const isActive = user.isActive !== false;
+        tr.innerHTML = `
+          <td><strong>${user.username}</strong></td>
+          <td>${user.email || '-'}</td>
+          <td><span class="badge ${user.role === 'admin' ? 'badge-admin' : 'badge-user'}">${user.role}</span></td>
+          <td><span class="badge ${isActive ? 'badge-active' : 'badge-blocked'}">${isActive ? 'Activo' : 'Bloqueado'}</span></td>
+          <td>
+            <button class="btn ${isActive ? 'btn-danger' : 'btn-success'}" onclick="toggleUser('${user.id || user._id}', ${!isActive})">
+              <i class="fa-solid fa-${isActive ? 'ban' : 'check'}"></i> ${isActive ? 'Bloquear' : 'Activar'}
+            </button>
+          </td>
+        `;
+        tbody.appendChild(tr);
+      });
+    }
+
+    async function toggleUser(id, newStatus) {
+      const res = await fetch(`/api/admin/users/${id}/status`, {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify({ isActive: newStatus })
+      });
+      const data = await res.json();
+      if (data.success) {
+        loadUsers();
+      } else {
+        alert(data.error);
+      }
+    }
+
+    // Cargar Configuración
+    async function loadConfig() {
+      const res = await fetch('/api/admin/config', {
+        headers: { 'Authorization': `Bearer ${adminToken}` }
+      });
+      const json = await res.json();
+      if (json.data) {
+        document.getElementById('cfgHeroId').value = json.data.featuredHeroId || 1;
+        document.getElementById('cfgHeroTitle').value = json.data.featuredHeroTitle || '';
+        document.getElementById('cfgHeroBanner').value = json.data.featuredHeroBannerUrl || '';
+        document.getElementById('cfgMinVersion').value = json.data.minAppVersion || '1.0.0';
+        document.getElementById('cfgMaintenance').checked = !!json.data.maintenanceMode;
+      }
+    }
+
+    document.getElementById('configForm').addEventListener('submit', async (e) => {
+      e.preventDefault();
+      const body = {
+        featuredHeroId: document.getElementById('cfgHeroId').value,
+        featuredHeroTitle: document.getElementById('cfgHeroTitle').value,
+        featuredHeroBannerUrl: document.getElementById('cfgHeroBanner').value,
+        minAppVersion: document.getElementById('cfgMinVersion').value,
+        maintenanceMode: document.getElementById('cfgMaintenance').checked
+      };
+      const res = await fetch('/api/admin/config', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': `Bearer ${adminToken}`
+        },
+        body: JSON.stringify(body)
+      });
+      const data = await res.json();
+      if (data.success) {
+        alert('Configuración actualizada correctamente');
+      } else {
+        alert(data.error);
+      }
+    });
+
+    checkAuth();
+  </script>
+</body>
+</html>
