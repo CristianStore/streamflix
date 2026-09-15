@@ -276,13 +276,9 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
     }
   }
 
-  // Si encontramos servidores Latino, intentar extraer el flujo HLS nativo (.m3u8 directo) de VidHide
-  // NOTA: acek-cdn restringe los tokens extraídos a la IP de origen. En datacenters en la nube (como Render),
-  // la IP de Render no coincide con la IP del cliente residencial, por lo que se priorizan los embeds directos.
-  const isCloudServer = Boolean(process.env.RENDER || process.env.IS_CLOUD || process.env.ON_RENDER);
-  if (!isCloudServer) {
-    const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')));
-    if (latVidhide && latVidhide.embedUrl) {
+  // Extraer el flujo HLS nativo (.m3u8 directo) de VidHide para reproducción 1080p limpia y sin anuncios
+  const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || (s.embedUrl && (s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')))));
+  if (latVidhide && latVidhide.embedUrl) {
       try {
         const directM3u8 = await extractVidhideStream(latVidhide.embedUrl);
         if (directM3u8) {
@@ -303,7 +299,6 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
           });
         }
       } catch (_) {}
-    }
   }
 
   // Guardar en caché si se obtuvieron resultados
