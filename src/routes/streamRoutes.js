@@ -21,7 +21,18 @@ router.get('/cuevana/search', cuevanaController.searchCuevana);
 router.get('/cuevana/extract', cuevanaController.extractStream);
 
 // Proxy simple para recuperar páginas embed cuando el cliente no puede resolver el dominio
-router.get('/proxy', streamController.proxyEmbed);
-router.get('/proxy-hls', streamController.proxyHls);
+router.get('/proxy', (req, res, next) => {
+  if (typeof streamController.proxyEmbed === 'function') {
+    return streamController.proxyEmbed(req, res, next);
+  }
+  return res.status(500).json({ error: 'proxyEmbed handler missing' });
+});
+
+router.get('/proxy-hls', (req, res, next) => {
+  if (typeof streamController.proxyHls === 'function') {
+    return streamController.proxyHls(req, res, next);
+  }
+  return res.status(500).json({ error: 'proxyHls handler missing' });
+});
 
 module.exports = router;
