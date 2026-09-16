@@ -34,12 +34,12 @@ jobs:
           cd frontend
           flutter pub get
 
-      - name: Build Android Release APK
+      - name: Build Universal Android Release APK
         run: |
           cd frontend
-          flutter build apk --release --split-per-abi
+          flutter build apk --release
 
-      - name: Upload Universal & ABI APK Artifacts
+      - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         with:
           name: StreamFlix-Android-APKs

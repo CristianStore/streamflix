@@ -1,0 +1,19 @@
+services:
+  - type: web
+    name: streamflix-backend
+    env: node
+    rootDir: backend
+    plan: free
+    buildCommand: npm install
+    startCommand: node src/server.js
+    envVars:
+      - key: NODE_ENV
+        value: production
+      - key: JWT_SECRET
+        generateValue: true
+      - key: STREAM_ENCRYPTION_KEY
+        generateValue: true
+      - key: MONGO_URI
+        sync: false
+      - key: TMDB_API_KEY
+        sync: false
