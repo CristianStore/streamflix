@@ -1,15 +1,14 @@
-plugins {
-    id "com.android.application"
-    id "org.jetbrains.kotlin.android"
-    id "dev.flutter.flutter-gradle-plugin"
-}
-
 def localProperties = new Properties()
 def localPropertiesFile = rootProject.file('local.properties')
 if (localPropertiesFile.exists()) {
     localPropertiesFile.withReader('UTF-8') { reader ->
         localProperties.load(reader)
     }
+}
+
+def flutterRoot = localProperties.getProperty('flutter.sdk')
+if (flutterRoot == null || flutterRoot.trim().isEmpty()) {
+    flutterRoot = System.getenv('FLUTTER_ROOT')
 }
 
 def flutterVersionCode = localProperties.getProperty('flutter.versionCode')
@@ -22,12 +21,13 @@ if (flutterVersionName == null) {
     flutterVersionName = '1.0'
 }
 
+apply plugin: 'com.android.application'
+apply plugin: 'kotlin-android'
+apply from: "$flutterRoot/packages/flutter_tools/gradle/flutter.gradle"
+
 android {
     namespace "com.streaming.app"
     compileSdk 34
-    if (flutter.ndkVersion != null) {
-        ndkVersion flutter.ndkVersion
-    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

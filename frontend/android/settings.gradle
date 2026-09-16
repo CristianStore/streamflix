@@ -1,37 +1,16 @@
-pluginManagement {
-    def flutterSdkPath = {
-        def properties = new Properties()
-        def propertiesFile = new File(rootDir, 'local.properties')
-        if (propertiesFile.exists()) {
-            propertiesFile.withInputStream { properties.load(it) }
-        }
-        def sdkPath = properties.getProperty('flutter.sdk')
-        if (sdkPath == null || sdkPath.trim().isEmpty()) {
-            sdkPath = System.getenv('FLUTTER_ROOT')
-        }
-        if (sdkPath == null || sdkPath.trim().isEmpty()) {
-            sdkPath = System.getenv('FLUTTER_HOME')
-        }
-        return sdkPath
-    }
+include ':app'
 
-    def sdkDir = flutterSdkPath()
-    if (sdkDir != null && !sdkDir.trim().isEmpty()) {
-        includeBuild("${sdkDir}/packages/flutter_tools/gradle")
-    }
-
-    repositories {
-        google()
-        mavenCentral()
-        gradlePluginPortal()
-    }
+def localPropertiesFile = new File(rootDir, 'local.properties')
+def properties = new Properties()
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.withInputStream { properties.load(it) }
 }
 
-plugins {
-    id "dev.flutter.flutter-plugin-loader" version "1.0.0"
-    id "com.android.application" version "8.2.1" apply false
-    id "org.jetbrains.kotlin.android" version "1.9.22" apply false
+def flutterSdkPath = properties.getProperty('flutter.sdk')
+if (flutterSdkPath == null || flutterSdkPath.trim().isEmpty()) {
+    flutterSdkPath = System.getenv('FLUTTER_ROOT')
 }
 
-include ":app"
-
+if (flutterSdkPath != null && !flutterSdkPath.trim().isEmpty()) {
+    includeBuild("$flutterSdkPath/packages/flutter_tools/gradle")
+}
