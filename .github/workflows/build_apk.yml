@@ -21,14 +21,12 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
-          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
         with:
           flutter-version: '3.24.0'
           channel: 'stable'
-          cache: true
 
       - name: Create local.properties
         run: |
@@ -47,11 +45,12 @@ jobs:
       - name: Build Universal Android Release APK
         run: |
           cd frontend
-          flutter build apk --release --verbose
+          flutter build apk --release
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: StreamFlix-Android-APKs
+          name: StreamFlix-Android-APK
           path: frontend/build/app/outputs/flutter-apk/*.apk
+
