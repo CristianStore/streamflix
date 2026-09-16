@@ -286,7 +286,9 @@ module.exports = {
   getMovieServers,
   getManifest,
   getDirectMovieStream,
-  getDirectHlsSource
+  getDirectHlsSource,
+  proxyEmbed,
+  proxyHls
 };
 
 // Proxy embebido: GET /api/stream/proxy?url=<encoded>
@@ -331,4 +333,61 @@ async function proxyEmbed(req, res) {
   }
 }
 
-module.exports.proxyEmbed = proxyEmbed;
+// Proxy HLS (.m3u8 y .ts) para sobrepasar restricciones CORS de CDNs externas como acek-cdn.com
+async function proxyHls(req, res) {
+  const { url } = req.query;
+  if (!url) return res.status(400).send('Missing url');
+
+  let targetUrl;
+  try {
+    targetUrl = new URL(url);
+  } catch (e) {
+    return res.status(400).send('Invalid url');
+  }
+
+  res.setHeader('Access-Control-Allow-Origin', '*');
+  res.setHeader('Access-Control-Allow-Methods', 'GET, OPTIONS');
+  res.setHeader('Access-Control-Allow-Headers', '*');
+
+  if (req.method === 'OPTIONS') {
+    return res.status(200).end();
+  }
+
+  try {
+    const isM3u8 = targetUrl.pathname.endsWith('.m3u8') || url.includes('.m3u8');
+    const headers = {
+      'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+      'Referer': 'https://vidhidepro.com/',
+      'Origin': 'https://vidhidepro.com'
+    };
+
+    if (isM3u8) {
+      const resp = await axios.get(url, { headers, responseType: 'text', timeout: 10000 });
+      let body = resp.data;
+
+      const baseUrlDir = url.substring(0, url.lastIndexOf('/') + 1);
+
+      const rewrittenBody = body.split('\n').map(line => {
+        const trimmed = line.trim();
+        if (!trimmed || trimmed.startsWith('#')) return line;
+
+        let absoluteLineUrl = trimmed;
+        if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
+          absoluteLineUrl = new URL(trimmed, baseUrlDir).toString();
+        }
+
+        return `/api/stream/proxy-hls?url=${encodeURIComponent(absoluteLineUrl)}`;
+      }).join('\n');
+
+      res.setHeader('Content-Type', 'application/x-mpegURL');
+      return res.status(200).send(rewrittenBody);
+    } else {
+      const resp = await axios.get(url, { headers, responseType: 'stream', timeout: 15000 });
+      res.setHeader('Content-Type', resp.headers['content-type'] || 'video/MP2T');
+      return resp.data.pipe(res);
+    }
+  } catch (err) {
+    console.error('[proxyHls] Error al retransmitir flujo:', err.message);
+    return res.status(502).send('Error loading stream segment');
+  }
+}
