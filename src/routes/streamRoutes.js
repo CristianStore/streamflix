@@ -18,8 +18,10 @@ router.post('/direct', authenticateToken, streamController.getDirectHlsSource);
 
 // Consulta local/personal de enlaces de Cuevana (prioriza latino)
 router.get('/cuevana/search', cuevanaController.searchCuevana);
+router.get('/cuevana/extract', cuevanaController.extractStream);
 
 // Proxy simple para recuperar páginas embed cuando el cliente no puede resolver el dominio
 router.get('/proxy', streamController.proxyEmbed);
+router.get('/proxy-hls', streamController.proxyHls);
 
 module.exports = router;
