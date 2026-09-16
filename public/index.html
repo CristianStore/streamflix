@@ -1472,13 +1472,14 @@
 
     function loadEmbedFrame(url) {
       const embedFrame = document.getElementById('embedFrame');
-      // Eliminamos sandbox para evitar "This video is not available due to sandboxed iframe!"
       embedFrame.removeAttribute('sandbox');
+      embedFrame.setAttribute('referrerpolicy', 'no-referrer');
       applyPopupGuard(window);
       embedFrame.src = 'about:blank';
       setTimeout(() => {
         try { applyPopupGuard(embedFrame.contentWindow); } catch(e){}
         embedFrame.removeAttribute('sandbox');
+        embedFrame.setAttribute('referrerpolicy', 'no-referrer');
         embedFrame.src = url;
       }, 80);
     }
@@ -1944,6 +1945,9 @@
         hlsInstance.on(Hls.Events.ERROR, (_, data) => {
           if (!data.fatal) return;
           console.warn('[HLS] Error fatal en la reproducción HLS:', data.type, data.details);
+          if (data.type === Hls.ErrorTypes.NETWORK_ERROR) {
+            hlsInstance.startLoad();
+          }
           if (fallbackUrls && fallbackUrls.length > 0) {
             const nextUrl = fallbackUrls.shift();
             if (nextUrl) {
@@ -1951,6 +1955,14 @@
               playVideoHls(nextUrl, title, fallbackUrls);
               return;
             }
+          }
+          const curSrv = currentServerCatalog[currentServerIndex];
+          if (curSrv && curSrv.directEmbedUrl && !curSrv.directEmbedUrl.includes('.m3u8')) {
+            hlsInstance.destroy();
+            video.style.display = 'none';
+            embedFrame.style.display = 'block';
+            loadEmbedFrame(curSrv.directEmbedUrl);
+            return;
           }
           if (currentServerCatalog && currentServerCatalog.length > 0) {
             hlsInstance.destroy();
