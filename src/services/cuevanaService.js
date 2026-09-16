@@ -276,12 +276,13 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
     }
   }
 
-  // Extraer el flujo HLS nativo (.m3u8 directo) de VidHide para reproducción 1080p limpia y sin anuncios
+  // Extraer el flujo HLS nativo (.m3u8 directo) de VidHide pasando por nuestro proxy para evitar bloqueos CORS
   const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || (s.embedUrl && (s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')))));
   if (latVidhide && latVidhide.embedUrl) {
       try {
         const directM3u8 = await extractVidhideStream(latVidhide.embedUrl);
         if (directM3u8) {
+          const proxiedUrl = `/api/stream/proxy-hls?url=${encodeURIComponent(directM3u8)}`;
           allResults.unshift({
             id: 'cuevana-lat-direct-1',
             server: 'HLS Nativo',
@@ -291,9 +292,9 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
             audio: 'Latino',
             format: 'm3u8',
             isDirect: true,
-            url: directM3u8,
-            embedUrl: directM3u8,
-            directEmbedUrl: directM3u8,
+            url: proxiedUrl,
+            embedUrl: proxiedUrl,
+            directEmbedUrl: proxiedUrl,
             isLatino: true,
             priority: 0.1
           });
