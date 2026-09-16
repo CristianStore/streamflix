@@ -1,0 +1,46 @@
+name: Build StreamFlix Android APK
+
+on:
+  push:
+    branches: [ main, master ]
+  pull_request:
+    branches: [ main, master ]
+  workflow_dispatch:
+
+jobs:
+  build:
+    name: Build Flutter Release APK
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+
+      - name: Set up Java JDK
+        uses: actions/setup-java@v4
+        with:
+          distribution: 'zulu'
+          java-version: '17'
+
+      - name: Set up Flutter
+        uses: subosito/flutter-action@v2
+        with:
+          flutter-version: '3.24.0'
+          channel: 'stable'
+          cache: true
+
+      - name: Install Dependencies
+        run: |
+          cd frontend
+          flutter pub get
+
+      - name: Build Android Release APK
+        run: |
+          cd frontend
+          flutter build apk --release --split-per-abi
+
+      - name: Upload Universal & ABI APK Artifacts
+        uses: actions/upload-artifact@v4
+        with:
+          name: StreamFlix-Android-APKs
+          path: frontend/build/app/outputs/flutter-apk/*.apk
