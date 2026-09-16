@@ -391,3 +391,6 @@ async function proxyHls(req, res) {
     return res.status(502).send('Error loading stream segment');
   }
 }
+
+module.exports.proxyEmbed = proxyEmbed;
+module.exports.proxyHls = proxyHls;
