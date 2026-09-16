@@ -47,10 +47,11 @@ jobs:
       - name: Build Universal Android Release APK
         run: |
           cd frontend
-          flutter build apk --release
+          flutter build apk --release --verbose
 
       - name: Upload APK Artifacts
         uses: actions/upload-artifact@v4
+        if: always()
         with:
           name: StreamFlix-Android-APKs
           path: frontend/build/app/outputs/flutter-apk/*.apk
