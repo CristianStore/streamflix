@@ -6,17 +6,18 @@ pluginManagement {
             propertiesFile.withInputStream { properties.load(it) }
         }
         def sdkPath = properties.getProperty('flutter.sdk')
-        if (sdkPath == null) {
+        if (sdkPath == null || sdkPath.trim().isEmpty()) {
             sdkPath = System.getenv('FLUTTER_ROOT')
         }
-        if (sdkPath == null) {
+        if (sdkPath == null || sdkPath.trim().isEmpty()) {
             sdkPath = System.getenv('FLUTTER_HOME')
         }
         return sdkPath
-    }()
+    }
 
-    if (flutterSdkPath != null) {
-        includeBuild("${flutterSdkPath}/packages/flutter_tools/gradle")
+    def sdkDir = flutterSdkPath()
+    if (sdkDir != null && !sdkDir.trim().isEmpty()) {
+        includeBuild("${sdkDir}/packages/flutter_tools/gradle")
     }
 
     repositories {
@@ -33,3 +34,4 @@ plugins {
 }
 
 include ":app"
+
