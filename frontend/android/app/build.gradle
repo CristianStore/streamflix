@@ -1,6 +1,6 @@
 plugins {
     id "com.android.application"
-    id "kotlin-android"
+    id "org.jetbrains.kotlin.android"
     id "dev.flutter.flutter-gradle-plugin"
 }
 
@@ -25,7 +25,9 @@ if (flutterVersionName == null) {
 android {
     namespace "com.streaming.app"
     compileSdk 34
-    ndkVersion flutter.ndkVersion
+    if (flutter.ndkVersion != null) {
+        ndkVersion flutter.ndkVersion
+    }
 
     compileOptions {
         sourceCompatibility JavaVersion.VERSION_17

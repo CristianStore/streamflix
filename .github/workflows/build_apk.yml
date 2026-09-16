@@ -21,6 +21,7 @@ jobs:
         with:
           distribution: 'zulu'
           java-version: '17'
+          cache: 'gradle'
 
       - name: Set up Flutter
         uses: subosito/flutter-action@v2
@@ -32,8 +33,7 @@ jobs:
       - name: Create local.properties
         run: |
           mkdir -p frontend/android
-          FLUTTER_SDK_PATH=$(flutter sdk-path 2>/dev/null || dirname $(dirname $(which flutter)))
-          echo "flutter.sdk=$FLUTTER_SDK_PATH" > frontend/android/local.properties
+          echo "flutter.sdk=$FLUTTER_ROOT" > frontend/android/local.properties
           echo "sdk.dir=$ANDROID_HOME" >> frontend/android/local.properties
           echo "flutter.buildMode=release" >> frontend/android/local.properties
           echo "flutter.versionName=1.0.0" >> frontend/android/local.properties
