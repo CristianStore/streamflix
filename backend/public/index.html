@@ -243,14 +243,23 @@
       margin-left: 12px;
     }
 
-    /* Soporte Control Remoto D-Pad */
+    /* Soporte Control Remoto D-Pad & Ocultamiento de Puntero Azul en TV */
+    body.tv-mode, body.tv-mode * {
+      cursor: none !important;
+    }
+
+    .tv-focusable {
+      transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, border 0.2s, outline 0.2s;
+    }
+
     .tv-focusable:focus,
     .tv-focusable.tv-focused {
-      outline: none;
-      transform: scale(1.08);
-      border: var(--tv-border) !important;
-      box-shadow: var(--focus-glow) !important;
-      z-index: 10;
+      outline: 4px solid #E50914 !important;
+      outline-offset: 3px;
+      transform: scale(1.1) translateY(-4px) !important;
+      box-shadow: 0 12px 32px rgba(229, 9, 20, 0.95), 0 0 22px rgba(255, 255, 255, 0.7) !important;
+      z-index: 100 !important;
+      border-color: #E50914 !important;
     }
 
     .btn-play:focus,
@@ -680,17 +689,17 @@
         </div>
       </div>
       <nav class="nav-tabs">
-        <button class="nav-tab-btn active" id="tabNavHome" onclick="switchMainTab('home')">Inicio</button>
-        <button class="nav-tab-btn" id="tabNavMovies" onclick="switchMainTab('movies')">
+        <button class="nav-tab-btn tv-focusable active" id="tabNavHome" tabindex="1" onclick="switchMainTab('home')">Inicio</button>
+        <button class="nav-tab-btn tv-focusable" id="tabNavMovies" tabindex="2" onclick="switchMainTab('movies')">
           <i class="fa-solid fa-film"></i> Películas
         </button>
-        <button class="nav-tab-btn" id="tabNavSeries" onclick="switchMainTab('series')">
+        <button class="nav-tab-btn tv-focusable" id="tabNavSeries" tabindex="3" onclick="switchMainTab('series')">
           <i class="fa-solid fa-tv"></i> Series
         </button>
-        <button class="nav-tab-btn" id="tabNavLive" onclick="switchMainTab('iptv')">
+        <button class="nav-tab-btn tv-focusable" id="tabNavLive" tabindex="4" onclick="switchMainTab('iptv')">
           <i class="fa-solid fa-satellite-dish" style="color:red;"></i> TV en Vivo
         </button>
-        <button class="nav-tab-btn" id="btnTvMode" onclick="openTvModal()" style="color:#00ff88; background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.35); border-radius:20px; padding:5px 12px; margin-left:6px; font-weight:700;">
+        <button class="nav-tab-btn tv-focusable" id="btnTvMode" tabindex="5" onclick="openTvModal()" style="color:#00ff88; background:rgba(0,255,136,0.1); border:1px solid rgba(0,255,136,0.35); border-radius:20px; padding:5px 12px; margin-left:6px; font-weight:700;">
           <i class="fa-solid fa-tv"></i> Ver en tu TV
         </button>
       </nav>
@@ -698,15 +707,15 @@
     <div class="user-actions">
       <div class="search-box">
         <i class="fa-solid fa-magnifying-glass" style="color:#aaa;"></i>
-        <input type="text" id="searchInput" placeholder="Buscar título...">
+        <input type="text" id="searchInput" class="tv-focusable" tabindex="6" placeholder="Buscar título...">
       </div>
-      <a href="/admin" class="btn-admin-nav" id="btnAdminPanel">
+      <a href="/admin" class="btn-admin-nav tv-focusable" tabindex="7" id="btnAdminPanel">
         <i class="fa-solid fa-shield-halved"></i> Panel Admin
       </a>
       <div class="badge-user">
         <i class="fa-solid fa-user-circle"></i> <span id="usernameDisplay">Usuario</span>
       </div>
-      <button class="btn btn-outline" style="padding:6px 12px; font-size:13px;" onclick="logout()">
+      <button class="btn btn-outline tv-focusable" tabindex="8" style="padding:6px 12px; font-size:13px;" onclick="logout()">
         <i class="fa-solid fa-power-off"></i>
       </button>
     </div>
@@ -2093,8 +2102,91 @@
       navigator.serviceWorker.register('/sw.js').catch(() => {});
     }
 
+    // ─── CONTROL REMOTO D-PAD Y NAVEGACIÓN ESPACIAL PARA SMART TV ───────────
+    function getTvFocusableElements() {
+      const activeModal = document.querySelector('.modal.active, .player-view.active, .auth-overlay.active');
+      const root = activeModal || document;
+      return Array.from(root.querySelectorAll('.tv-focusable, button, a[href], input, select, [tabindex]'))
+        .filter(el => {
+          const style = window.getComputedStyle(el);
+          return style.display !== 'none' && style.visibility !== 'hidden' && el.offsetWidth > 0 && el.offsetHeight > 0;
+        });
+    }
+
+    function navigateDpad(direction) {
+      document.body.classList.add('tv-mode');
+      const focusables = getTvFocusableElements();
+      if (!focusables.length) return;
+
+      let current = document.activeElement;
+      if (!current || !focusables.includes(current)) {
+        focusables[0].focus();
+        return;
+      }
+
+      const curRect = current.getBoundingClientRect();
+      let bestCandidate = null;
+      let minDistance = Infinity;
+
+      focusables.forEach(el => {
+        if (el === current) return;
+        const rect = el.getBoundingClientRect();
+
+        let isValid = false;
+        let dist = 0;
+
+        const dx = (rect.left + rect.width / 2) - (curRect.left + curRect.width / 2);
+        const dy = (rect.top + rect.height / 2) - (curRect.top + curRect.height / 2);
+
+        if (direction === 'right' && dx > 5) {
+          isValid = true;
+          dist = dx + Math.abs(dy) * 2.5;
+        } else if (direction === 'left' && dx < -5) {
+          isValid = true;
+          dist = Math.abs(dx) + Math.abs(dy) * 2.5;
+        } else if (direction === 'down' && dy > 5) {
+          isValid = true;
+          dist = dy + Math.abs(dx) * 2.5;
+        } else if (direction === 'up' && dy < -5) {
+          isValid = true;
+          dist = Math.abs(dy) + Math.abs(dx) * 2.5;
+        }
+
+        if (isValid && dist < minDistance) {
+          minDistance = dist;
+          bestCandidate = el;
+        }
+      });
+
+      if (bestCandidate) {
+        bestCandidate.focus();
+        bestCandidate.scrollIntoView({ behavior: 'smooth', block: 'nearest', inline: 'center' });
+      }
+    }
+
     window.addEventListener('keydown', (e) => {
-      if (e.key === 'Escape') {
+      const key = e.keyCode || e.which;
+
+      if (key === 39 || e.key === 'ArrowRight') {
+        e.preventDefault();
+        navigateDpad('right');
+      } else if (key === 37 || e.key === 'ArrowLeft') {
+        e.preventDefault();
+        navigateDpad('left');
+      } else if (key === 40 || e.key === 'ArrowDown') {
+        e.preventDefault();
+        navigateDpad('down');
+      } else if (key === 38 || e.key === 'ArrowUp') {
+        e.preventDefault();
+        navigateDpad('up');
+      } else if (key === 13 || key === 66 || e.key === 'Enter') {
+        if (document.activeElement && typeof document.activeElement.click === 'function') {
+          e.preventDefault();
+          document.activeElement.click();
+        }
+      } else if (key === 27 || key === 461 || key === 10009 || e.key === 'Escape') {
+        if (document.activeElement && document.activeElement.tagName === 'INPUT') return;
+        e.preventDefault();
         if (document.getElementById('playerView').classList.contains('active')) closePlayer();
         else if (document.getElementById('detailModal').classList.contains('active')) closeDetail();
         else if (document.getElementById('tvModal') && document.getElementById('tvModal').classList.contains('active')) closeTvModal();
