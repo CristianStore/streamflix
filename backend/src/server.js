@@ -36,21 +36,21 @@ app.use(cors({
   allowedHeaders: ['Content-Type', 'Authorization']
 }));
 app.use(express.json());
-app.use(express.static(path.join(__dirname, '../public')));
+// Configuración de archivos estáticos sin caché para actualización instantánea en TV
+app.use(express.static(path.join(__dirname, '../public'), {
+  etag: false,
+  maxAge: 0,
+  setHeaders: (res, filePath) => {
+    if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
+      res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+    }
+  }
+}));
 
-// La raíz del backend queda como API, no como landing HTML vieja.
-app.get('/', (req, res) => {
-  res.json({
-    status: 'online',
-    service: 'StreamFlix API',
-    message: 'La app web real se ejecuta en Flutter. Usa /api/health para verificar el backend.',
-    endpoints: [
-      '/api/health',
-      '/api/movies',
-      '/api/series',
-      '/api/stream/cuevana/search'
-    ]
-  });
+// Servir la aplicación web principal StreamFlix en la raíz y /index.html sin caché
+app.get(['/', '/index.html'], (req, res) => {
+  res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
+  res.sendFile(path.join(__dirname, '../public/index.html'));
 });
 
 // Ruta para el Panel de Administración visual
