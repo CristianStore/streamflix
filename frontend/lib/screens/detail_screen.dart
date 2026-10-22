@@ -34,11 +34,16 @@ class _DetailScreenState extends State<DetailScreen> {
 
   Future<void> _loadCuevanaServers() async {
     if (widget.item.title.trim().isEmpty) return;
+    // Solo precargar para películas; para series se resuelven dinámicamente por episodio
+    if (!widget.item.isMovie) return;
 
     setState(() => _isLoadingCuevana = true);
     try {
       final api = ApiService();
-      final sources = await api.searchCuevana(title: widget.item.title);
+      final sources = await api.searchCuevana(
+        title: widget.item.title,
+        type: 'movie',
+      );
       if (!mounted) return;
       setState(() => _cuevanaSources = sources);
     } catch (_) {
@@ -63,30 +68,35 @@ class _DetailScreenState extends State<DetailScreen> {
     required int episode,
   }) {
     final isMovie = type == 'movie';
-    final isLatino = _audioMode == 'latino';
-    final vidlinkLang = isLatino ? 'es' : 'en';
 
     return [
       {
         'id': 'vsembed-latino',
-        'name': '🇲🇽 VSEmbed (Español Latino)',
+        'name': '🇲🇽 Servidor VSEmbed (Español Latino)',
         'url': isMovie
             ? 'https://vsembed.ru/embed/movie?tmdb=$tmdbId&ds_lang=es'
             : 'https://vsembed.ru/embed/tv?tmdb=$tmdbId&season=$season&episode=$episode&ds_lang=es',
       },
       {
         'id': 'vidlink-pro',
-        'name': 'VidLink Español',
+        'name': '🌐 Servidor VidLink (Audio Latino)',
         'url': isMovie
-            ? 'https://vidlink.pro/movie/$tmdbId?primaryColor=e50914&lang=$vidlinkLang'
-            : 'https://vidlink.pro/tv/$tmdbId/$season/$episode?primaryColor=e50914&lang=$vidlinkLang',
+            ? 'https://vidlink.pro/movie/$tmdbId?primaryColor=e50914&lang=es'
+            : 'https://vidlink.pro/tv/$tmdbId/$season/$episode?primaryColor=e50914&lang=es',
       },
       {
         'id': 'autoembed-es',
-        'name': 'Autoembed',
+        'name': '🇲🇽 Servidor Autoembed (Español Latino)',
         'url': isMovie
             ? 'https://player.autoembed.cc/embed/movie/$tmdbId?lang=es'
             : 'https://player.autoembed.cc/embed/tv/$tmdbId/$season/$episode?lang=es',
+      },
+      {
+        'id': 'videasy-hd',
+        'name': '🌐 Servidor Videasy HD (Multi-Audio)',
+        'url': isMovie
+            ? 'https://player.videasy.net/movie/$tmdbId'
+            : 'https://player.videasy.net/tv/$tmdbId/$season/$episode',
       },
     ];
   }
@@ -113,21 +123,13 @@ class _DetailScreenState extends State<DetailScreen> {
 
     List<Map<String, dynamic>> serverList = [];
 
-    // 1. Priorizar servidores de Cuevana Latino cargados en el cliente
-    if (_cuevanaSources.isNotEmpty) {
-      serverList = _cuevanaSources.map((s) => {
-        'name': (s['name'] ?? s['server'] ?? 'Servidor Latino').toString(),
-        'url': (s['url'] ?? s['embedUrl'] ?? s['directEmbedUrl'] ?? '').toString(),
-      }).toList();
-    }
-
-    // 2. Si no hay Cuevana, consultar /api/stream/servers al backend
-    if (serverList.isEmpty) {
+    // Para series: Consultar dinámicamente el backend para ESTA temporada y episodio
+    if (!isMovie) {
       try {
         final api = ApiService();
         final serversFromBackend = await api.getMovieServers(
           tmdbId: widget.item.id,
-          type: isMovie ? 'movie' : 'tv',
+          type: 'tv',
           season: resolvedSeason,
           episode: resolvedEpisode,
           title: widget.item.title,
@@ -137,12 +139,45 @@ class _DetailScreenState extends State<DetailScreen> {
           serverList = serversFromBackend.map((s) => {
             'name': (s['name'] ?? 'Servidor').toString(),
             'url': (s['url'] ?? s['embedUrl'] ?? '').toString(),
+            'language': (s['language'] ?? '').toString(),
+            'isDirect': s['isDirect'] == true,
           }).toList();
         }
       } catch (_) {}
+    } else {
+      // Para películas: Si ya tenemos Cuevana en memoria, usarlo
+      if (_cuevanaSources.isNotEmpty) {
+        serverList = _cuevanaSources.map((s) => {
+          'name': (s['name'] ?? s['server'] ?? 'Servidor Latino').toString(),
+          'url': (s['url'] ?? s['embedUrl'] ?? s['directEmbedUrl'] ?? '').toString(),
+          'language': (s['language'] ?? 'Español Latino').toString(),
+          'isDirect': s['isDirect'] == true || s['format'] == 'm3u8',
+        }).toList();
+      }
+
+      // Si no hay Cuevana, consultar el backend
+      if (serverList.isEmpty) {
+        try {
+          final api = ApiService();
+          final serversFromBackend = await api.getMovieServers(
+            tmdbId: widget.item.id,
+            type: 'movie',
+            title: widget.item.title,
+            originalTitle: widget.item.originalTitle,
+          );
+          if (serversFromBackend.isNotEmpty) {
+            serverList = serversFromBackend.map((s) => {
+              'name': (s['name'] ?? 'Servidor').toString(),
+              'url': (s['url'] ?? s['embedUrl'] ?? '').toString(),
+              'language': (s['language'] ?? '').toString(),
+              'isDirect': s['isDirect'] == true,
+            }).toList();
+          }
+        } catch (_) {}
+      }
     }
 
-    // 3. Fallback al catálogo limpio estático (VSEmbed Latino, VidLink, Autoembed)
+    // Fallback al catálogo limpio garantizado con Español Latino
     if (serverList.isEmpty) {
       serverList = _buildCleanServerCatalog(
         tmdbId: widget.item.id,
@@ -406,7 +441,7 @@ class _DetailScreenState extends State<DetailScreen> {
                               ),
                             ),
 
-                            if (_cuevanaSources.isNotEmpty || _isLoadingCuevana) ...[
+                            if (widget.item.isMovie && (_cuevanaSources.isNotEmpty || _isLoadingCuevana)) ...[
                               const SizedBox(height: 12),
                               Container(
                                 padding: const EdgeInsets.all(10),

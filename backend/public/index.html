@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>StreamFlix — Creado por c.Darcksoul</title>
+  <title>CineNova — Tu cine en casa</title>
   <link rel="icon" type="image/png" href="/icon.png">
   <link rel="manifest" href="/manifest.json">
   <meta name="theme-color" content="#E50914">
@@ -34,6 +34,22 @@
       font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
       overflow-x: hidden;
       user-select: none;
+    }
+
+    /* Scrollbars elegantes y nativos para la aplicación */
+    ::-webkit-scrollbar {
+      width: 8px;
+      height: 8px;
+    }
+    ::-webkit-scrollbar-track {
+      background: #141414;
+    }
+    ::-webkit-scrollbar-thumb {
+      background: #2a2a2a;
+      border-radius: 4px;
+    }
+    ::-webkit-scrollbar-thumb:hover {
+      background: var(--primary-red);
     }
 
     /* Barra Superior */
@@ -677,15 +693,12 @@
   <!-- Barra de Navegación -->
   <header id="mainHeader">
     <div class="brand-section">
-      <div class="brand-wrapper" onclick="switchMainTab('home')" style="cursor:pointer; display:flex; align-items:center; gap:10px;">
-        <img src="/icon.png" alt="StreamFlix Logo" style="width:36px; height:36px; object-fit:contain; filter:drop-shadow(0 0 10px rgba(229,9,20,0.85));">
+      <div class="brand-wrapper" onclick="switchMainTab('home')" style="cursor:pointer; display:flex; align-items:center; gap:12px;">
+        <img src="/icon.png" alt="CineNova Logo" style="width:38px; height:38px; object-fit:contain; filter:drop-shadow(0 0 12px rgba(168,85,247,0.7));">
         <div style="display:flex; flex-direction:column;">
-          <div class="brand" style="margin:0; font-size:22px; font-weight:900; letter-spacing:1.5px; line-height:1; color:#fff;">
-            STREAMFLIX
+          <div class="brand" style="margin:0; font-size:24px; font-weight:900; letter-spacing:2px; line-height:1; color:#fff;">
+            CINE<span style="color:#A855F7;">NOVA</span>
           </div>
-          <span style="font-size:9px; font-weight:800; letter-spacing:1.6px; color:#E50914; text-transform:uppercase; margin-top:2px;">
-            by c.Darcksoul
-          </span>
         </div>
       </div>
       <nav class="nav-tabs">
@@ -727,7 +740,7 @@
     <section class="hero" id="heroSection">
       <div class="hero-overlay"></div>
       <div class="hero-content">
-        <span class="hero-tag">DESTACADO EN STREAMFLIX</span>
+        <span class="hero-tag">DESTACADO EN CINENOVA</span>
         <h1 class="hero-title" id="heroTitle">Sintel</h1>
         <div class="hero-meta">
           <span class="hero-rating"><i class="fa-solid fa-star"></i> <span id="heroRating">8.2</span> / 10</span>
@@ -794,17 +807,17 @@
 
   <!-- Pie de Página de Autoría -->
   <footer style="margin-top:70px; padding:40px 24px; border-top:1px solid rgba(255,255,255,0.08); text-align:center; background:#0e0e0e;">
-    <div style="font-size:22px; font-weight:bold; letter-spacing:1.5px; color:#E50914; margin-bottom:6px;">
-      <i class="fa-solid fa-film"></i> STREAMFLIX
+    <div style="font-size:24px; font-weight:900; letter-spacing:2px; color:#fff; margin-bottom:6px;">
+      <i class="fa-solid fa-film" style="color:#A855F7;"></i> CINE<span style="color:#A855F7;">NOVA</span>
     </div>
     <p style="color:#ffffff; font-size:14px; font-weight:600; margin-bottom:4px;">
-      Plataforma de Streaming diseñada y creada por <span style="color:#E50914; font-weight:bold;">c.Darcksoul</span>
+      Plataforma de Streaming diseñada y creada por <span style="color:#A855F7; font-weight:bold;">c.Darcksoul</span>
     </p>
     <p style="color:#888; font-size:12px; margin-bottom:14px;">
       Películas y Series en Español Latino • HD 1080p • Actualización Semanal Automática • Sin Publicidad
     </p>
     <div style="display:flex; justify-content:center; align-items:center; gap:16px; font-size:12px; color:#666; flex-wrap:wrap;">
-      <span>© 2026 StreamFlix</span>
+      <span>© 2026 CineNova</span>
       <span>•</span>
       <span style="color:#00ff88;"><i class="fa-solid fa-circle-check"></i> Actualización Semanal Activa</span>
       <span>•</span>
@@ -824,7 +837,7 @@
         <div style="font-size:38px; color:#00ff88; margin-bottom:12px;">
           <i class="fa-solid fa-tv"></i>
         </div>
-        <h2 style="font-size:22px; margin-bottom:6px; color:#fff;">Ver StreamFlix en tu Smart TV</h2>
+        <h2 style="font-size:22px; margin-bottom:6px; color:#fff;">Ver CineNova en tu Smart TV</h2>
         <p style="color:#aaa; font-size:13px; line-height:1.5; margin-bottom:20px;">
           Disfruta de todo el catálogo en cualquier televisor inteligente (Samsung, LG, Android TV, Fire TV, Google TV, Roku) o en tu celular.
         </p>
@@ -877,7 +890,7 @@
         </div>
 
         <div style="font-size:11px; color:#666; margin-top:14px;">
-          StreamFlix 2.0 • Desarrollado por <strong>c.Darcksoul</strong>
+          CineNova 2.0 • El nuevo universo del streaming
         </div>
       </div>
     </div>
@@ -934,8 +947,8 @@
       </button>
       <div class="player-title" id="playerTitle">Reproduciendo...</div>
 
-      <div style="background:rgba(0,0,0,0.65); border:1px solid rgba(229,9,20,0.4); border-radius:20px; padding:6px 14px; font-size:11px; color:#fff; display:flex; align-items:center; gap:6px; backdrop-filter:blur(6px);">
-        <i class="fa-solid fa-crown" style="color:#e50914;"></i> <span>StreamFlix • <strong style="color:#e50914;">c.Darcksoul</strong></span>
+      <div style="background:rgba(0,0,0,0.65); border:1px solid rgba(168,85,247,0.4); border-radius:20px; padding:6px 14px; font-size:11px; color:#fff; display:flex; align-items:center; gap:6px; backdrop-filter:blur(6px);">
+        <i class="fa-solid fa-film" style="color:#A855F7;"></i> <span>CineNova</span>
       </div>
 
       <!-- Instrucción de Ayuda Visual en Pantalla -->
@@ -1002,8 +1015,8 @@
   <div class="auth-overlay" id="authGateModal">
     <div class="auth-box">
       <div style="text-align:center; margin-bottom:20px;">
-        <i class="fa-solid fa-film" style="color:var(--primary-red); font-size:36px;"></i>
-        <h2 style="margin-top:8px; letter-spacing:1.5px; color:var(--primary-red);">STREAMFLIX</h2>
+        <i class="fa-solid fa-film" style="color:#A855F7; font-size:36px;"></i>
+        <h2 style="margin-top:8px; letter-spacing:2px; color:#fff;">CINE<span style="color:#A855F7;">NOVA</span></h2>
         <p style="color:var(--text-gray); font-size:13px;">Inicia sesión o regístrate para acceder</p>
       </div>
 
@@ -1023,7 +1036,7 @@
           <input type="password" id="loginPassword" required placeholder="••••••••">
         </div>
         <button type="submit" class="btn btn-play" style="width:100%; justify-content:center; margin-top:8px;">
-          Entrar a StreamFlix
+          Entrar a CineNova
         </button>
 
         <div style="margin-top:16px; display:flex; gap:8px;">
@@ -1482,15 +1495,13 @@
     function loadEmbedFrame(url) {
       const embedFrame = document.getElementById('embedFrame');
       embedFrame.removeAttribute('sandbox');
-      embedFrame.setAttribute('referrerpolicy', 'no-referrer');
-      applyPopupGuard(window);
+      embedFrame.setAttribute('referrerpolicy', 'origin');
+      embedFrame.setAttribute('allow', 'autoplay; fullscreen; encrypted-media; picture-in-picture; display-capture');
+      embedFrame.setAttribute('allowfullscreen', 'true');
       embedFrame.src = 'about:blank';
       setTimeout(() => {
-        try { applyPopupGuard(embedFrame.contentWindow); } catch(e){}
-        embedFrame.removeAttribute('sandbox');
-        embedFrame.setAttribute('referrerpolicy', 'no-referrer');
         embedFrame.src = url;
-      }, 80);
+      }, 50);
     }
     window.onbeforeunload = function() { return null; };
     document.addEventListener('click', function(e) {
@@ -1519,15 +1530,6 @@
         e.stopPropagation();
       }
     }, true);
-
-    // Evitar que popups o redirecciones desvíen la atención fuera de la aplicación
-    window.addEventListener('blur', function() {
-      if (document.activeElement && document.activeElement.tagName === 'IFRAME') {
-        setTimeout(function() {
-          window.focus();
-        }, 80);
-      }
-    });
 
     // ─── LÓGICA DE REPRODUCCIÓN DINÁMICA CON SERVIDORES EN ESPAÑOL LATINO ───
     let currentServerCatalog = [];
@@ -1561,19 +1563,37 @@
         console.warn('[Player] Error al obtener servidores de la API:', err);
       }
 
-      // Fallback si la API no estuviera disponible
+      // Fallback si la API no estuviera disponible (Priorizando 100% Español Latino)
       const id = item.id;
       return [
         {
           id: 'vsembed-latino',
-          name: '🇲🇽 Servidor Latino (VSEmbed)',
-          url: isMovie ? `https://vsembed.ru/embed/movie?tmdb=${id}&ds_lang=es` : `https://vsembed.ru/embed/tv?tmdb=${id}&sea=${season}&epi=${episode}&ds_lang=es`,
+          name: '🇲🇽 Servidor VSEmbed (Español Latino)',
+          url: isMovie ? `https://vsembed.ru/embed/movie?tmdb=${id}&ds_lang=es` : `https://vsembed.ru/embed/tv?tmdb=${id}&season=${season}&episode=${episode}&ds_lang=es`,
           language: 'Español Latino'
         },
         {
           id: 'vidlink-pro',
-          name: '🌐 Servidor VidLink (Multilenguaje)',
-          url: isMovie ? `https://vidlink.pro/movie/${id}?multiLang=true&lang=es` : `https://vidlink.pro/tv/${id}/${season}/${episode}?multiLang=true&lang=es`,
+          name: '🌐 Servidor VidLink (Audio Latino)',
+          url: isMovie ? `https://vidlink.pro/movie/${id}?primaryColor=e50914&lang=es` : `https://vidlink.pro/tv/${id}/${season}/${episode}?primaryColor=e50914&lang=es`,
+          language: 'Español Latino'
+        },
+        {
+          id: 'autoembed-es',
+          name: '🇲🇽 Servidor Autoembed (Español Latino)',
+          url: isMovie ? `https://player.autoembed.cc/embed/movie/${id}?lang=es` : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}?lang=es`,
+          language: 'Español Latino'
+        },
+        {
+          id: 'videasy-hd',
+          name: '🌐 Servidor Videasy HD (Multi-Audio)',
+          url: isMovie ? `https://player.videasy.net/movie/${id}` : `https://player.videasy.net/tv/${id}/${season}/${episode}`,
+          language: 'Multilenguaje / Audio Latino'
+        },
+        {
+          id: 'vidsrc-pm',
+          name: '⚡ Servidor VidSrc (Respaldo)',
+          url: isMovie ? `https://vidsrc.pm/embed/movie/${id}` : `https://vidsrc.pm/embed/tv/${id}/${season}-${episode}`,
           language: 'Multilenguaje'
         }
       ];
@@ -1711,8 +1731,10 @@
       playerView.classList.add('active');
       triggerOverlayVisibility();
 
-      // Cargar lista de servidores desde el backend si es una nueva carga
-      if (serverIdx === 0 || !currentServerCatalog.length) {
+      // Cargar lista de servidores desde el backend si es una nueva carga o cambia de episodio/contenido
+      const mediaKey = `${item.id}_${item.type}_${season}_${episode}`;
+      if (serverIdx === 0 || window._lastPlayedMediaKey !== mediaKey || !currentServerCatalog.length) {
+        window._lastPlayedMediaKey = mediaKey;
         currentServerCatalog = await fetchServersForMedia(item, season, episode);
       }
 
@@ -1782,19 +1804,21 @@
       }, 10000);
     }
 
-    // Evento de carga del iFrame: protección contra ventanas emergentes
+    // Evento de carga del iFrame
     const iframeEl = document.getElementById('embedFrame');
     iframeEl.addEventListener('load', () => {
-      applyPopupGuard(window);
-      applyPopupGuard(iframeEl.contentWindow);
+      try { applyPopupGuard(window); } catch(e){}
+      try { if (iframeEl.contentWindow) applyPopupGuard(iframeEl.contentWindow); } catch(e){}
 
-      if (iframeEl.src !== 'about:blank') {
-        setTimeout(() => {
-          hideStatusBanner();
-          const spinner = document.getElementById('playerLoadingSpinner');
-          if (spinner) spinner.style.display = 'none';
-          streamLoadedSuccessfully = true;
-        }, 1500);
+      if (iframeEl.src && !iframeEl.src.includes('about:blank')) {
+        if (fallbackTimer) {
+          clearTimeout(fallbackTimer);
+          fallbackTimer = null;
+        }
+        streamLoadedSuccessfully = true;
+        hideStatusBanner();
+        const spinner = document.getElementById('playerLoadingSpinner');
+        if (spinner) spinner.style.display = 'none';
       }
     });
 

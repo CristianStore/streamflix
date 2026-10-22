@@ -60,12 +60,12 @@ class _HomeScreenState extends State<HomeScreen> {
             const Icon(Icons.movie_filter_rounded, color: AppTheme.primaryRed, size: 28),
             const SizedBox(width: 8),
             Text(
-              'STREAMFLIX',
+              'CINENOVA',
               style: TextStyle(
-                color: AppTheme.primaryRed,
+                color: Color(0xFFA855F7),
                 fontWeight: FontWeight.w900,
                 fontSize: 22,
-                letterSpacing: 1.5,
+                letterSpacing: 2.0,
               ),
             ),
             const SizedBox(width: 20),

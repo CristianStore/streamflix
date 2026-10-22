@@ -1,12 +1,12 @@
 {
-  "name": "streamflix-desktop",
+  "name": "cinenova-desktop",
   "version": "1.0.0",
   "private": true,
-  "main": "electron/main.js",
+  "main": "index.js",
   "scripts": {
-    "start": "npm run desktop",
-    "desktop": "concurrently \"npm --prefix backend run dev\" \"wait-on http://localhost:3000 && electron . --disable-gpu --disable-gpu-compositing --disable-software-rasterizer\"",
-    "electron": "electron . --disable-gpu --disable-gpu-compositing --disable-software-rasterizer",
+    "start": "electron .",
+    "desktop": "electron .",
+    "electron": "electron .",
     "desktop:shortcut": "node scripts/create-desktop-shortcut.js"
   },
   "devDependencies": {

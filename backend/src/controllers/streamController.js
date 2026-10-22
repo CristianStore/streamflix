@@ -306,6 +306,12 @@ async function proxyEmbed(req, res) {
   // Lista blanca de hosts permitidos para evitar abuso
   const ALLOWED_HOSTS = [
     'vidlink.pro',
+    'vidsrc.pm',
+    'vidsrc.me',
+    'vidsrc.to',
+    'embed.smashystream.com',
+    '2embed.cc',
+    'www.2embed.cc',
     'player.autoembed.cc',
     'vsembed.ru',
     'morencius.com',
@@ -317,15 +323,17 @@ async function proxyEmbed(req, res) {
     'dood.li',
     'cuevana3l.pro',
     'cuevana3l.biz',
+    'cuevana3c.pro',
+    'tungtungsahur.cuevana3c.pro',
     'tungtungsahur.cuevana3l.pro',
     'nextgencloudfabric.com'
   ];
-  if (!ALLOWED_HOSTS.includes(parsed.hostname)) {
+  if (!ALLOWED_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith('.' + h))) {
     return res.status(403).json({ success: false, error: 'Host not allowed' });
   }
 
   try {
-    const resp = await axios.get(url, { responseType: 'text', timeout: 8000, headers: { 'User-Agent': 'StreamFlix-Proxy/1.0' } });
+    const resp = await axios.get(url, { responseType: 'text', timeout: 8000, headers: { 'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64)' } });
     res.set('Content-Type', 'text/html; charset=utf-8');
     return res.status(200).send(resp.data);
   } catch (err) {
@@ -354,11 +362,19 @@ async function proxyHls(req, res) {
   }
 
   try {
-    const isM3u8 = targetUrl.pathname.endsWith('.m3u8') || url.includes('.m3u8');
+    const isM3u8 = targetUrl.pathname.endsWith('.m3u8') 
+      || targetUrl.pathname.endsWith('.txt') 
+      || url.includes('.m3u8') 
+      || url.includes('.urlset');
+
+    const referer = targetUrl.hostname.includes('vidhidepro') 
+      ? 'https://vidhidepro.com/' 
+      : 'https://morencius.com/';
+
     const headers = {
       'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-      'Referer': 'https://vidhidepro.com/',
-      'Origin': 'https://vidhidepro.com'
+      'Referer': referer,
+      'Origin': referer.replace(/\/$/, '')
     };
 
     if (isM3u8) {
@@ -369,7 +385,17 @@ async function proxyHls(req, res) {
 
       const rewrittenBody = body.split('\n').map(line => {
         const trimmed = line.trim();
-        if (!trimmed || trimmed.startsWith('#')) return line;
+        if (!trimmed) return line;
+
+        if (trimmed.startsWith('#')) {
+          return line.replace(/URI="([^"]+)"/g, (m, uri) => {
+            let absUri = uri;
+            if (!uri.startsWith('http://') && !uri.startsWith('https://')) {
+              absUri = new URL(uri, baseUrlDir).toString();
+            }
+            return `URI="/api/stream/proxy-hls?url=${encodeURIComponent(absUri)}"`;
+          });
+        }
 
         let absoluteLineUrl = trimmed;
         if (!trimmed.startsWith('http://') && !trimmed.startsWith('https://')) {
@@ -379,7 +405,7 @@ async function proxyHls(req, res) {
         return `/api/stream/proxy-hls?url=${encodeURIComponent(absoluteLineUrl)}`;
       }).join('\n');
 
-      res.setHeader('Content-Type', 'application/x-mpegURL');
+      res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');
       return res.status(200).send(rewrittenBody);
     } else {
       const resp = await axios.get(url, { headers, responseType: 'stream', timeout: 15000 });

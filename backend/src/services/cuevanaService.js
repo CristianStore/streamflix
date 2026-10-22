@@ -1,7 +1,7 @@
 const axios = require('axios');
 
-const PRIMARY_BASE_URL = 'https://cuevana3l.pro';
-const FALLBACK_BASE_URL = 'https://cuevana3l.biz';
+const PRIMARY_BASE_URL = 'https://cuevana3c.pro';
+const FALLBACK_BASE_URL = 'https://cuevana3l.pro';
 
 const XOR_KEY = 'a45f04ce-2394-47c3-b718-0ecd97ce51d6';
 const SERVER_PREFIXES = {
@@ -27,14 +27,28 @@ async function extractVidhideStream(embedUrl) {
       }
     });
     const html = res.data || '';
-    const idx = html.indexOf('eval(function(p,a,c,k,e,d)');
-    if (idx === -1) return null;
-    const end = html.indexOf('</script>', idx);
-    const evalCode = html.slice(idx, end).trim();
-    const codeToRun = evalCode.replace(/^eval\(/, '(');
-    const unpacked = eval(codeToRun);
-    const m3u8Match = unpacked.match(/https?:\/\/[^\s"',\\]+\.m3u8[^\s"',\\]*/i);
-    return m3u8Match ? m3u8Match[0] : null;
+    const scripts = html.match(/<script[\s\S]*?<\/script>/gi) || [];
+    for (const s of scripts) {
+      if (!s.includes('eval(')) continue;
+      const evalIdx = s.indexOf('eval(');
+      const code = s.slice(evalIdx).replace(/<\/script>$/, '').trim();
+      const codeToRun = code.replace(/^eval\(/, '(');
+      try {
+        const unpacked = eval(codeToRun);
+        const match = String(unpacked).match(/var\s+links\s*=\s*(\{[\s\S]*?\});/);
+        if (match) {
+          const links = JSON.parse(match[1]);
+          const candidate = links.hls2 || links.hls4 || links.hls3;
+          if (candidate) {
+            const finalUrl = candidate.startsWith('http') ? candidate : `https://morencius.com${candidate}`;
+            return finalUrl;
+          }
+        }
+        const m3u8Match = String(unpacked).match(/https?:\/\/[^\s"',\\]+\.m3u8[^\s"',\\]*/i);
+        if (m3u8Match) return m3u8Match[0];
+      } catch (_) {}
+    }
+    return null;
   } catch (err) {
     return null;
   }
@@ -277,29 +291,33 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
   }
 
   // Extraer el flujo HLS nativo (.m3u8 directo) de VidHide pasando por nuestro proxy para evitar bloqueos CORS
-  const latVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || (s.embedUrl && (s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')))));
-  if (latVidhide && latVidhide.embedUrl) {
-      try {
-        const directM3u8 = await extractVidhideStream(latVidhide.embedUrl);
-        if (directM3u8) {
-          const proxiedUrl = `/api/stream/proxy-hls?url=${encodeURIComponent(directM3u8)}`;
-          allResults.unshift({
-            id: 'cuevana-lat-direct-1',
-            server: 'HLS Nativo',
-            name: '🇲🇽 Servidor Latino Nativo (1080p Sin Anuncios)',
-            quality: 'HD 1080p',
-            language: 'Español Latino',
-            audio: 'Latino',
-            format: 'm3u8',
-            isDirect: true,
-            url: proxiedUrl,
-            embedUrl: proxiedUrl,
-            directEmbedUrl: proxiedUrl,
-            isLatino: true,
-            priority: 0.1
-          });
-        }
-      } catch (_) {}
+  const targetVidhide = allResults.find(s => s.isLatino && (s.server === 'VidHide' || (s.embedUrl && (s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide')))))
+    || allResults.find(s => s.server === 'VidHide' || (s.embedUrl && (s.embedUrl.includes('morencius') || s.embedUrl.includes('vidhide'))));
+
+  if (targetVidhide && targetVidhide.embedUrl) {
+    try {
+      const directM3u8 = await extractVidhideStream(targetVidhide.embedUrl);
+      if (directM3u8) {
+        const proxiedUrl = `/api/stream/proxy-hls?url=${encodeURIComponent(directM3u8)}`;
+        allResults.unshift({
+          id: 'cuevana-direct-native-1',
+          server: 'HLS Nativo',
+          name: targetVidhide.isLatino 
+            ? '🇲🇽 Servidor Latino Nativo (1080p Sin Anuncios)'
+            : `⚡ Servidor Nativo (${targetVidhide.language || 'HD'})`,
+          quality: 'HD 1080p',
+          language: targetVidhide.language || 'Español Latino',
+          audio: targetVidhide.audio || 'Latino',
+          format: 'm3u8',
+          isDirect: true,
+          url: proxiedUrl,
+          embedUrl: proxiedUrl,
+          directEmbedUrl: proxiedUrl,
+          isLatino: Boolean(targetVidhide.isLatino),
+          priority: 0.1
+        });
+      }
+    } catch (_) {}
   }
 
   // Guardar en caché si se obtuvieron resultados

@@ -1,23 +1,23 @@
 {
   "id": "https://streamflix-cdarcksoul.onrender.com/",
-  "name": "StreamFlix - c.Darcksoul",
-  "short_name": "StreamFlix",
-  "description": "Plataforma de Streaming en Español Latino creada por c.Darcksoul",
+  "name": "CineNova - Tu Cine en Casa",
+  "short_name": "CineNova",
+  "description": "CineNova - El nuevo universo del streaming en películas, series y canales en vivo",
   "start_url": "/",
   "display": "standalone",
   "orientation": "any",
-  "background_color": "#141414",
-  "theme_color": "#E50914",
+  "background_color": "#0E0E16",
+  "theme_color": "#A855F7",
   "categories": ["entertainment", "movies", "tv"],
   "icons": [
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2503/2503508.png",
+      "src": "/icon.png",
       "sizes": "192x192",
       "type": "image/png",
       "purpose": "any maskable"
     },
     {
-      "src": "https://cdn-icons-png.flaticon.com/512/2503/2503508.png",
+      "src": "/icon.png",
       "sizes": "512x512",
       "type": "image/png",
       "purpose": "any maskable"

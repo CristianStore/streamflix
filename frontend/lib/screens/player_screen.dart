@@ -60,8 +60,13 @@ class _PlayerScreenState extends State<PlayerScreen> {
     '🔁 Servidor 2 — Autoembed',
   ];
 
+  bool get _isHlsPlayer =>
+      widget.streamUrl.toLowerCase().contains('.m3u8') ||
+      widget.streamUrl.toLowerCase().contains('proxy-hls');
+
   /// Detecta si la URL es de un reproductor embed (iframe) en vez de HLS directo
   bool get _isEmbedPlayer {
+    if (_isHlsPlayer) return false;
     final url = widget.streamUrl.toLowerCase();
     return url.contains('/embed') ||
         url.contains('vsembed') ||
@@ -75,20 +80,20 @@ class _PlayerScreenState extends State<PlayerScreen> {
         url.contains('dood') ||
         url.contains('vidcore') ||
         url.contains('vidsrc') ||
+        url.contains('videasy') ||
         url.contains('superembed') ||
         url.contains('multiembed') ||
         url.contains('2embed');
   }
 
-  bool get _isHlsPlayer => widget.streamUrl.toLowerCase().contains('.m3u8');
-
   @override
   void initState() {
     super.initState();
-    if (_isEmbedPlayer) {
+    if (_isHlsPlayer) {
+      // Priorizar el reproductor nativo (ExoPlayer) para máxima calidad 1080p y fluidez
+      _initializePlayer();
+    } else if (_isEmbedPlayer) {
       _initializeWebView();
-    } else if (_isHlsPlayer) {
-      _initializeHlsWebView();
     } else {
       _initializePlayer();
     }
@@ -246,13 +251,16 @@ if (window.Hls && Hls.isSupported()) {
           );
         },
       );
-
       setState(() {});
     } catch (err) {
-      setState(() {
-        _hasError = true;
-        _errorMessage = 'Error al reproducir manifiesto HLS: $err';
-      });
+      if (_isHlsPlayer && _webViewController == null) {
+        _initializeHlsWebView();
+      } else {
+        setState(() {
+          _hasError = true;
+          _errorMessage = 'Error al reproducir: $err';
+        });
+      }
     }
   }
 

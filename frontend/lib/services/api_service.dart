@@ -195,20 +195,54 @@ class ApiService {
     }
   }
 
+  /// Convierte una URL relativa (ej. /api/stream/proxy-hls) en una URL absoluta usando baseUrl
+  String resolveAbsoluteUrl(String url) {
+    if (url.isEmpty) return url;
+    if (url.startsWith('http://') || url.startsWith('https://')) return url;
+    if (url.startsWith('/')) {
+      final root = baseUrl.replaceAll(RegExp(r'/api/?$'), '');
+      return '$root$url';
+    }
+    return url;
+  }
+
   /// Consulta de servidores Cuevana priorizando contenido Latino
-  Future<List<Map<String, dynamic>>> searchCuevana({required String title}) async {
+  Future<List<Map<String, dynamic>>> searchCuevana({
+    required String title,
+    String type = 'movie',
+    int season = 1,
+    int episode = 1,
+  }) async {
     final uri = Uri.parse('$baseUrl/stream/cuevana/search').replace(queryParameters: {
       'title': title,
+      'type': type,
+      'season': season.toString(),
+      'episode': episode.toString(),
     });
 
-    final response = await http.get(uri, headers: _headers());
-    if (response.statusCode == 200) {
-      final json = jsonDecode(response.body);
-      final data = json['data'];
-      if (data is List) {
-        return data.cast<Map<String, dynamic>>();
+    try {
+      final response = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 10));
+      if (response.statusCode == 200) {
+        final json = jsonDecode(response.body);
+        final data = json['data'];
+        if (data is List) {
+          final list = data.cast<Map<String, dynamic>>();
+          return list.map((server) {
+            final copy = Map<String, dynamic>.from(server);
+            if (copy['url'] != null) {
+              copy['url'] = resolveAbsoluteUrl(copy['url'].toString());
+            }
+            if (copy['embedUrl'] != null) {
+              copy['embedUrl'] = resolveAbsoluteUrl(copy['embedUrl'].toString());
+            }
+            if (copy['directEmbedUrl'] != null) {
+              copy['directEmbedUrl'] = resolveAbsoluteUrl(copy['directEmbedUrl'].toString());
+            }
+            return copy;
+          }).toList();
+        }
       }
-    }
+    } catch (_) {}
     return [];
   }
 
@@ -231,11 +265,24 @@ class ApiService {
     });
 
     try {
-      final response = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 8));
+      final response = await http.get(uri, headers: _headers()).timeout(const Duration(seconds: 10));
       if (response.statusCode == 200) {
         final json = jsonDecode(response.body);
         if (json['success'] == true && json['servers'] is List) {
-          return List<Map<String, dynamic>>.from(json['servers']);
+          final list = List<Map<String, dynamic>>.from(json['servers']);
+          return list.map((server) {
+            final copy = Map<String, dynamic>.from(server);
+            if (copy['url'] != null) {
+              copy['url'] = resolveAbsoluteUrl(copy['url'].toString());
+            }
+            if (copy['embedUrl'] != null) {
+              copy['embedUrl'] = resolveAbsoluteUrl(copy['embedUrl'].toString());
+            }
+            if (copy['directEmbedUrl'] != null) {
+              copy['directEmbedUrl'] = resolveAbsoluteUrl(copy['directEmbedUrl'].toString());
+            }
+            return copy;
+          }).toList();
         }
       }
     } catch (_) {}

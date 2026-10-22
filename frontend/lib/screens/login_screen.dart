@@ -108,12 +108,12 @@ class _LoginScreenState extends State<LoginScreen> {
                       ),
                       const SizedBox(width: 10),
                       Text(
-                        'STREAMFLIX',
+                        'CINENOVA',
                         style: TextStyle(
-                          color: AppTheme.primaryRed,
+                          color: Color(0xFFA855F7),
                           fontSize: 28,
                           fontWeight: FontWeight.w900,
-                          letterSpacing: 2.0,
+                          letterSpacing: 2.5,
                         ),
                       ),
                     ],

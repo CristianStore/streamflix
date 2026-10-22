@@ -192,54 +192,91 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
     console.warn('[streamProviderService] Error resolviendo fuentes de Cuevana:', err.message);
   }
 
-  // 2. Servidor VSEmbed con parámetro forzado de Español Latino (ds_lang=es)
-  if (safeTmdbId > 0) {
+  // 2. Servidores universales de alta velocidad y compatibilidad (TMDB)
+    // 2.1 VSEmbed (Español Latino Garantizado)
     const vsembedUrl = normalizedType === 'tv'
       ? `https://vsembed.ru/embed/tv?tmdb=${safeTmdbId}&season=${resolvedSeason}&episode=${resolvedEpisode}&ds_lang=es`
       : `https://vsembed.ru/embed/movie?tmdb=${safeTmdbId}&ds_lang=es`;
 
     servers.push({
       id: 'server-vsembed-latino',
-      name: '🇲🇽 Servidor Latino Alternativo (VSEmbed)',
+      name: '🇲🇽 Servidor VSEmbed (Español Latino)',
       quality: 'HD 1080p',
       language: 'Español Latino',
       isDirect: false,
       format: 'embed',
       url: vsembedUrl,
+      directEmbedUrl: vsembedUrl,
       streamData: encryptStreamUrl(vsembedUrl)
     });
 
-    // 3. Servidores internacionales de respaldo (VidLink y Autoembed)
+    // 2.2 VidLink (Soporta múltiples audios y pistas en audio latino)
     const vidlinkUrl = normalizedType === 'tv'
       ? `https://vidlink.pro/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}?primaryColor=e50914&lang=es`
       : `https://vidlink.pro/movie/${safeTmdbId}?primaryColor=e50914&lang=es`;
 
     servers.push({
       id: 'server-vidlink-pro',
-      name: '🌐 Servidor Multilenguaje / VO (VidLink)',
+      name: '🌐 Servidor VidLink (Audio Latino / Multi-Audio)',
       quality: 'HD 1080p',
-      language: 'Multilenguaje / Audio Original',
+      language: 'Español Latino',
       isDirect: false,
       format: 'embed',
       url: vidlinkUrl,
+      directEmbedUrl: vidlinkUrl,
       streamData: encryptStreamUrl(vidlinkUrl)
     });
 
+    // 2.3 Autoembed (Con filtro forzado en Español)
     const autoembedUrl = normalizedType === 'tv'
       ? `https://player.autoembed.cc/embed/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}?lang=es`
       : `https://player.autoembed.cc/embed/movie/${safeTmdbId}?lang=es`;
 
     servers.push({
       id: 'server-autoembed',
-      name: '🌐 Servidor Respaldo (Autoembed)',
-      quality: 'HD 720p',
-      language: 'Multilenguaje / Audio Original',
+      name: '🇲🇽 Servidor Autoembed (Español Latino)',
+      quality: 'HD 1080p',
+      language: 'Español Latino',
       isDirect: false,
       format: 'embed',
       url: autoembedUrl,
+      directEmbedUrl: autoembedUrl,
       streamData: encryptStreamUrl(autoembedUrl)
     });
-  }
+
+    // 2.4 Videasy (Alta tasa de bits y subtítulos/audio en español)
+    const videasyUrl = normalizedType === 'tv'
+      ? `https://player.videasy.net/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}`
+      : `https://player.videasy.net/movie/${safeTmdbId}`;
+
+    servers.push({
+      id: 'server-videasy',
+      name: '🌐 Servidor Videasy HD (Multi-Audio)',
+      quality: 'HD 1080p',
+      language: 'Multilenguaje / Audio Latino',
+      isDirect: false,
+      format: 'embed',
+      url: videasyUrl,
+      directEmbedUrl: videasyUrl,
+      streamData: encryptStreamUrl(videasyUrl)
+    });
+
+    // 2.5 VidSrc (Respaldo Ultra Rápido)
+    const vidsrcUrl = normalizedType === 'tv'
+      ? `https://vidsrc.pm/embed/tv/${safeTmdbId}/${resolvedSeason}-${resolvedEpisode}`
+      : `https://vidsrc.pm/embed/movie/${safeTmdbId}`;
+
+    servers.push({
+      id: 'server-vidsrc-pm',
+      name: '⚡ Servidor VidSrc (Respaldo)',
+      quality: 'HD 1080p',
+      language: 'Multilenguaje / VO',
+      isDirect: false,
+      format: 'embed',
+      url: vidsrcUrl,
+      directEmbedUrl: vidsrcUrl,
+      streamData: encryptStreamUrl(vidsrcUrl)
+    });
 
   const configuredProviders = (process.env.AUTHORIZED_STREAM_PROVIDERS || '')
     .split(',')
@@ -265,6 +302,21 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
       streamData: encryptStreamUrl(originalHlsUrl)
     });
   }
+
+  // Ordenar priorizando: 1) HLS Nativo Latino, 2) Servidores con Audio Latino garantizado, 3) Multilenguaje
+  servers.sort((a, b) => {
+    const aIsDirect = Boolean(a.isDirect);
+    const bIsDirect = Boolean(b.isDirect);
+    if (aIsDirect && !bIsDirect) return -1;
+    if (!aIsDirect && bIsDirect) return 1;
+
+    const aLatino = (a.language || '').toLowerCase().includes('latino') || Boolean(a.isLatino);
+    const bLatino = (b.language || '').toLowerCase().includes('latino') || Boolean(b.isLatino);
+    if (aLatino && !bLatino) return -1;
+    if (!aLatino && bLatino) return 1;
+
+    return 0;
+  });
 
   return {
     tmdbId: safeTmdbId,
