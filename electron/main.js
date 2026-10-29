@@ -21,12 +21,8 @@ try {
   app.setPath('userData', userDataDir);
 } catch (_) {}
 
-const gotTheLock = app.requestSingleInstanceLock();
-if (!gotTheLock) {
-  log('Instancia duplicada detectada, enfocando ventana existente y saliendo.');
-  app.quit();
-  process.exit(0);
-}
+// Permite siempre abrir la ventana sin bloquearse por procesos huérfanos
+app.requestSingleInstanceLock();
 
 let mainWindow = null;
 let backendProcess = null;
@@ -285,6 +281,8 @@ app.whenReady().then(async () => {
   if (mainWindow && !mainWindow.isDestroyed()) {
     log('Cargando URL principal:', BACKEND_URL);
     mainWindow.loadURL(BACKEND_URL);
+    mainWindow.show();
+    mainWindow.focus();
   }
 
   app.on('activate', () => {
