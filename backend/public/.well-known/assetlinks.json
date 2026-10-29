@@ -1,0 +1,8 @@
+[{
+      "relation": ["delegate_permission/common.handle_all_urls"],
+      "target": {
+        "namespace": "android_app",
+        "package_name": "com.onrender.streamflix_cdarcksoul.twa",
+        "sha256_cert_fingerprints": ["77:67:96:59:2D:28:65:48:9F:D6:05:BC:8C:FB:9F:71:A1:8D:AA:AD:4C:C6:86:FA:3A:FD:35:EE:C1:26:8E:C7"]
+      }
+    }]

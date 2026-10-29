@@ -59,6 +59,20 @@ if ($arscEntry) {
     }
 }
 
+# 1.1 Actualizar res/Wo.json (Manifest embebido en APK)
+$jsonEntry = $zip.GetEntry("res/Wo.json")
+if ($jsonEntry) {
+    Write-Output "1.1 Modificando res/Wo.json con metadata de CineNova..."
+    $cinenovaManifest = '{"name":"CineNova - Tu Cine en Casa","short_name":"CineNova","description":"El nuevo universo del streaming en películas, series y TV en vivo","start_url":"/","display":"standalone","orientation":"any","background_color":"#141414","theme_color":"#E50914","icons":[{"src":"https://cdn-icons-png.flaticon.com/512/2503/2503508.png","sizes":"192x192","type":"image/png","purpose":"any maskable"},{"src":"https://cdn-icons-png.flaticon.com/512/2503/2503508.png","sizes":"512x512","type":"image/png","purpose":"any maskable"}]}'
+    $jsonBytes = [System.Text.Encoding]::UTF8.GetBytes($cinenovaManifest)
+    $jsonEntry.Delete()
+    $newJsonEntry = $zip.CreateEntry("res/Wo.json", [System.IO.Compression.CompressionLevel]::Optimal)
+    $w = $newJsonEntry.Open()
+    $w.Write($jsonBytes, 0, $jsonBytes.Length)
+    $w.Close()
+    Write-Output "res/Wo.json actualizado a CineNova exitosamente."
+}
+
 # 2. Reemplazar iconos y banners dentro del ZIP
 Write-Output "2. Reemplazando iconos y banners con gráficos CineNova..."
 $cinenovaIcon = [System.Drawing.Image]::FromFile("$appDir\cinenova.png")

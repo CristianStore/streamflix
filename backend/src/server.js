@@ -40,6 +40,7 @@ app.use(express.json());
 app.use(express.static(path.join(__dirname, '../public'), {
   etag: false,
   maxAge: 0,
+  dotfiles: 'allow',
   setHeaders: (res, filePath) => {
     if (filePath.endsWith('.html') || filePath.endsWith('.js')) {
       res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
@@ -47,7 +48,14 @@ app.use(express.static(path.join(__dirname, '../public'), {
   }
 }));
 
-// Servir la aplicación web principal StreamFlix en la raíz y /index.html sin caché
+// Verificación de Digital Asset Links para Android TWA (oculta la barra roja del navegador en BlueStacks / TV)
+app.get('/.well-known/assetlinks.json', (req, res) => {
+  res.setHeader('Content-Type', 'application/json');
+  res.setHeader('Cache-Control', 'public, max-age=86400');
+  res.sendFile(path.join(__dirname, '../public/.well-known/assetlinks.json'));
+});
+
+// Servir la aplicación web principal CineNova en la raíz y /index.html sin caché
 app.get(['/', '/index.html'], (req, res) => {
   res.setHeader('Cache-Control', 'no-store, no-cache, must-revalidate, private');
   res.sendFile(path.join(__dirname, '../public/index.html'));
