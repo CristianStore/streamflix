@@ -112,23 +112,31 @@ app.use((err, req, res, next) => {
   });
 });
 
-// Inicio del servidor solo cuando se ejecuta directamente
-if (require.main === module) {
-  // Inicializar conexión a base de datos (MongoDB o fallback)
-  connectDatabase().then(() => {
-    app.listen(config.port, () => {
-      const tmdbReady = Boolean(config.tmdb.apiKey) && config.tmdb.apiKey.length > 10;
-      console.log(`====================================================`);
-      console.log(`🚀 StreamFlix Cloud API corriendo en el puerto: ${config.port}`);
-      console.log(`📡 URL Local:      http://localhost:${config.port}`);
-      console.log(`📡 Panel Admin:    http://localhost:${config.port}/admin`);
-      console.log(`📡 Canales IPTV:   http://localhost:${config.port}/api/iptv/channels`);
-      console.log(`📡 TMDb Masivo:    http://localhost:${config.port}/api/tmdb/popular`);
-      console.log(`🔑 TMDb API Key:   ${tmdbReady ? 'activa' : 'NO CONFIGURADA (usando respaldo mock)'}`);
-      console.log(`====================================================`);
-      scheduleWeeklyCatalogSync();
+// Función de arranque del servidor
+function startServer() {
+  return connectDatabase().then(() => {
+    return new Promise((resolve) => {
+      const server = app.listen(config.port, () => {
+        const tmdbReady = Boolean(config.tmdb.apiKey) && config.tmdb.apiKey.length > 10;
+        console.log(`====================================================`);
+        console.log(`🚀 CineNova Cloud API corriendo en el puerto: ${config.port}`);
+        console.log(`📡 URL Local:      http://localhost:${config.port}`);
+        console.log(`📡 Panel Admin:    http://localhost:${config.port}/admin`);
+        console.log(`📡 Canales IPTV:   http://localhost:${config.port}/api/iptv/channels`);
+        console.log(`📡 TMDb Masivo:    http://localhost:${config.port}/api/tmdb/popular`);
+        console.log(`🔑 TMDb API Key:   ${tmdbReady ? 'activa' : 'NO CONFIGURADA (usando respaldo mock)'}`);
+        console.log(`====================================================`);
+        scheduleWeeklyCatalogSync();
+        resolve(server);
+      });
     });
   });
 }
 
+// Inicio del servidor cuando se ejecuta directamente
+if (require.main === module) {
+  startServer();
+}
+
 module.exports = app;
+module.exports.startServer = startServer;
