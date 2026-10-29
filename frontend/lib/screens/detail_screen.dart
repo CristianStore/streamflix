@@ -71,25 +71,32 @@ class _DetailScreenState extends State<DetailScreen> {
 
     return [
       {
-        'id': 'vsembed-latino',
-        'name': '🇲🇽 Servidor VSEmbed (Español Latino)',
+        'id': 'vidfast-pro',
+        'name': '🇲🇽 Servidor VidFast (Audio Latino / HD)',
         'url': isMovie
-            ? 'https://vsembed.ru/embed/movie?tmdb=$tmdbId&ds_lang=es'
-            : 'https://vsembed.ru/embed/tv?tmdb=$tmdbId&season=$season&episode=$episode&ds_lang=es',
+            ? 'https://vidfast.pro/movie/$tmdbId'
+            : 'https://vidfast.pro/tv/$tmdbId/$season/$episode',
       },
       {
         'id': 'vidlink-pro',
-        'name': '🌐 Servidor VidLink (Audio Latino)',
+        'name': '🇲🇽 Servidor VidLink (Audio Latino / 1080p)',
         'url': isMovie
             ? 'https://vidlink.pro/movie/$tmdbId?primaryColor=e50914&lang=es'
             : 'https://vidlink.pro/tv/$tmdbId/$season/$episode?primaryColor=e50914&lang=es',
       },
       {
-        'id': 'autoembed-es',
-        'name': '🇲🇽 Servidor Autoembed (Español Latino)',
+        'id': 'rivestream-live',
+        'name': '🌐 Servidor RiveStream (Multi-Audio)',
         'url': isMovie
-            ? 'https://player.autoembed.cc/embed/movie/$tmdbId?lang=es'
-            : 'https://player.autoembed.cc/embed/tv/$tmdbId/$season/$episode?lang=es',
+            ? 'https://rivestream.live/embed?type=movie&id=$tmdbId'
+            : 'https://rivestream.live/embed?type=tv&id=$tmdbId&season=$season&episode=$episode',
+      },
+      {
+        'id': 'autoembed-to',
+        'name': '⚡ Servidor AutoEmbed (Respaldo Rápido)',
+        'url': isMovie
+            ? 'https://autoembed.to/movie/tmdb/$tmdbId'
+            : 'https://autoembed.to/tv/tmdb/$tmdbId-$season-$episode',
       },
       {
         'id': 'videasy-hd',
@@ -97,6 +104,13 @@ class _DetailScreenState extends State<DetailScreen> {
         'url': isMovie
             ? 'https://player.videasy.net/movie/$tmdbId'
             : 'https://player.videasy.net/tv/$tmdbId/$season/$episode',
+      },
+      {
+        'id': 'vidsrc-pm',
+        'name': '⚡ Servidor VidSrc (Respaldo Rápido)',
+        'url': isMovie
+            ? 'https://vidsrc.pm/embed/movie/$tmdbId'
+            : 'https://vidsrc.pm/embed/tv/$tmdbId/$season-$episode',
       },
     ];
   }

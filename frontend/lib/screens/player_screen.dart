@@ -69,6 +69,8 @@ class _PlayerScreenState extends State<PlayerScreen> {
     if (_isHlsPlayer) return false;
     final url = widget.streamUrl.toLowerCase();
     return url.contains('/embed') ||
+        url.contains('vidfast') ||
+        url.contains('rivestream') ||
         url.contains('vsembed') ||
         url.contains('vidlink') ||
         url.contains('autoembed') ||

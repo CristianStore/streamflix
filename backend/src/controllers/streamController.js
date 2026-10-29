@@ -305,27 +305,35 @@ async function proxyEmbed(req, res) {
 
   // Lista blanca de hosts permitidos para evitar abuso
   const ALLOWED_HOSTS = [
+    'vidfast.pro',
     'vidlink.pro',
+    'rivestream.live',
+    'autoembed.to',
+    'videasy.net',
+    'player.videasy.net',
     'vidsrc.pm',
     'vidsrc.me',
     'vidsrc.to',
-    'embed.smashystream.com',
     '2embed.cc',
     'www.2embed.cc',
-    'player.autoembed.cc',
-    'vsembed.ru',
+    'embed.smashystream.com',
     'morencius.com',
+    'vidhidepro.com',
+    'vidhide.com',
+    'vidhidevip.com',
     'martinshop.xyz',
     'awish.pro',
     'streamwish.to',
     'streamwish.top',
     'filemoon.sx',
     'dood.li',
+    'cuevana3a.pro',
+    'cuevana3c.pro',
     'cuevana3l.pro',
     'cuevana3l.biz',
-    'cuevana3c.pro',
+    'tungtungsahur.cuevana3a.pro',
     'tungtungsahur.cuevana3c.pro',
-    'tungtungsahur.cuevana3l.pro',
+    'vidapi.xyz',
     'nextgencloudfabric.com'
   ];
   if (!ALLOWED_HOSTS.some(h => parsed.hostname === h || parsed.hostname.endsWith('.' + h))) {
@@ -402,7 +410,12 @@ async function proxyHls(req, res) {
           absoluteLineUrl = new URL(trimmed, baseUrlDir).toString();
         }
 
-        return `/api/stream/proxy-hls?url=${encodeURIComponent(absoluteLineUrl)}`;
+        // Solo reescribir sub-manifiestos .m3u8 para pasar por el proxy; los segmentos .ts van directos de la CDN
+        if (absoluteLineUrl.includes('.m3u8') || absoluteLineUrl.includes('.urlset')) {
+          return `/api/stream/proxy-hls?url=${encodeURIComponent(absoluteLineUrl)}`;
+        }
+
+        return absoluteLineUrl;
       }).join('\n');
 
       res.setHeader('Content-Type', 'application/vnd.apple.mpegurl');

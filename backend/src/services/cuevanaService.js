@@ -1,7 +1,8 @@
 const axios = require('axios');
 
-const PRIMARY_BASE_URL = 'https://cuevana3c.pro';
-const FALLBACK_BASE_URL = 'https://cuevana3l.pro';
+const CUEVANA_MIRRORS = ['https://cuevana3a.pro', 'https://cuevana3c.pro', 'https://cuevana3l.pro'];
+const PRIMARY_BASE_URL = CUEVANA_MIRRORS[0];
+const FALLBACK_BASE_URL = CUEVANA_MIRRORS[1];
 
 const XOR_KEY = 'a45f04ce-2394-47c3-b718-0ecd97ce51d6';
 const SERVER_PREFIXES = {
@@ -117,30 +118,33 @@ function isLatinoLabel(label = '') {
 /**
  * Realiza búsqueda interna en Cuevana
  */
-async function searchCuevana(query, baseUrl = PRIMARY_BASE_URL) {
+async function searchCuevana(query) {
   if (!query) return [];
-  try {
-    const searchUrl = `${baseUrl}/explorar?s=${encodeURIComponent(query)}`;
-    const response = await axios.get(searchUrl, {
-      timeout: 8000,
-      headers: {
-        'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
-        'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
-        'Accept-Language': 'es-ES,es;q=0.9'
+  for (const mirror of CUEVANA_MIRRORS) {
+    try {
+      const searchUrl = `${mirror}/explorar?s=${encodeURIComponent(query)}`;
+      const response = await axios.get(searchUrl, {
+        timeout: 6000,
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
+          'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
+          'Accept-Language': 'es-ES,es;q=0.9',
+          'Referer': `${mirror}/`
+        }
+      });
+
+      const html = response.data || '';
+      const hrefMatches = html.match(/href="([^"]+)"/gi) || [];
+      const hrefs = [...new Set(hrefMatches.map(m => m.replace(/^href="|"/gi, '')))];
+      const filtered = hrefs.filter(link => link.includes('/pelicula/') || link.includes('/serie/'));
+      if (filtered.length > 0) {
+        return filtered.map(link => link.startsWith('http') ? link : `${mirror}${link.startsWith('/') ? '' : '/'}${link}`);
       }
-    });
-
-    const html = response.data || '';
-    const hrefMatches = html.match(/href="([^"]+)"/gi) || [];
-    const hrefs = [...new Set(hrefMatches.map(m => m.replace(/^href="|"/gi, '')))];
-
-    return hrefs.filter(link => link.includes('/pelicula/') || link.includes('/serie/'));
-  } catch (error) {
-    if (baseUrl === PRIMARY_BASE_URL) {
-      return searchCuevana(query, FALLBACK_BASE_URL);
+    } catch (_) {
+      // Intentar con siguiente mirror
     }
-    return [];
   }
+  return [];
 }
 
 /**
@@ -148,13 +152,14 @@ async function searchCuevana(query, baseUrl = PRIMARY_BASE_URL) {
  */
 async function fetchCuevanaDetailByUrl(detailUrl) {
   try {
+    const origin = detailUrl.startsWith('http') ? new URL(detailUrl).origin : PRIMARY_BASE_URL;
     const response = await axios.get(detailUrl, {
       timeout: 8000,
       headers: {
         'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/120.0.0.0 Safari/537.36',
         'Accept': 'text/html,application/xhtml+xml,application/xml;q=0.9,*/*;q=0.8',
         'Accept-Language': 'es-ES,es;q=0.9',
-        'Referer': PRIMARY_BASE_URL
+        'Referer': `${origin}/`
       }
     });
 
@@ -252,12 +257,19 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
   }
 
   const isMovie = type === 'movie';
-  // Generar variantes de búsqueda para maximizar probabilidades de coincidencia (ej: IntensaMente -> Intensa Mente)
+  // Generar variantes de búsqueda para maximizar probabilidades de coincidencia
   const spacedTitle = title ? title.replace(/([a-z])([A-Z])/g, '$1 $2').replace(/(\D)(\d)/g, '$1 $2') : '';
+  const compoundSpaced = title ? title.replace(/([a-zA-Z]{3,})(mente)/gi, '$1 $2') : '';
+  const noPunctTitle = title ? title.replace(/[:&–—\-,]/g, ' ').replace(/\s+/g, ' ').trim() : '';
+  const cleanOriginal = originalTitle ? originalTitle.replace(/[:&–—\-,]/g, ' ').replace(/\s+/g, ' ').trim() : '';
+
   const queryCandidates = [
     title,
-    originalTitle,
     spacedTitle,
+    compoundSpaced,
+    noPunctTitle,
+    originalTitle,
+    cleanOriginal,
     cleanText(title),
     cleanText(originalTitle)
   ].filter(Boolean);
@@ -277,8 +289,9 @@ async function resolveCuevanaStreamLinks({ title, originalTitle, tmdbId, imdbId,
       let targetDetailUrl = matchingLinks[0];
       if (!isMovie) {
         // En series: Cuevana estructura como /serie/{slug}/episodio-{temporada}x{episodio}
+        const origin = targetDetailUrl.startsWith('http') ? new URL(targetDetailUrl).origin : PRIMARY_BASE_URL;
         const slug = targetDetailUrl.split('/serie/')[1].replace(/\/.*$/, '');
-        targetDetailUrl = `${PRIMARY_BASE_URL}/serie/${slug}/episodio-${season}x${episode}`;
+        targetDetailUrl = `${origin}/serie/${slug}/episodio-${season}x${episode}`;
       }
 
       const entries = await fetchCuevanaDetailByUrl(targetDetailUrl);

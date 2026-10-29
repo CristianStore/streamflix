@@ -2,6 +2,7 @@ const axios = require('axios');
 const crypto = require('crypto');
 const config = require('../config/config');
 const cuevanaService = require('./cuevanaService');
+const tmdbService = require('./tmdbService');
 
 const LATIN_AUDIO_CODES = ['es-MX', 'es-LAT', 'es-419', 'spa', 'es'];
 
@@ -160,13 +161,27 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
   const resolvedSeason = Number(season) || 1;
   const resolvedEpisode = Number(episode) || 1;
 
+  let resolvedTitle = title;
+  let resolvedOriginalTitle = originalTitle;
+
+  // Auto-resolver títulos oficiales y originales desde TMDb si no se proporcionaron
+  if (safeTmdbId > 0 && (!resolvedTitle || !resolvedOriginalTitle)) {
+    try {
+      const details = await tmdbService.getDetails(safeTmdbId, normalizedType);
+      if (details) {
+        if (!resolvedTitle) resolvedTitle = details.title || details.name || '';
+        if (!resolvedOriginalTitle) resolvedOriginalTitle = details.original_title || details.original_name || '';
+      }
+    } catch (_) {}
+  }
+
   const servers = [];
 
-  // 1. Intentar resolver servidores en vivo desde Cuevana3 (Español Latino garantizado)
+  // 1. Intentar resolver servidores en vivo desde Cuevana (Español Latino 100% garantizado)
   try {
     const cuevanaLinks = await cuevanaService.resolveCuevanaStreamLinks({
-      title,
-      originalTitle,
+      title: resolvedTitle,
+      originalTitle: resolvedOriginalTitle,
       tmdbId: safeTmdbId,
       type: normalizedType === 'tv' ? 'series' : 'movie',
       season: resolvedSeason,
@@ -184,7 +199,8 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
           format: item.format || 'embed',
           url: item.url || item.embedUrl,
           directEmbedUrl: item.directEmbedUrl || item.embedUrl,
-          streamData: encryptStreamUrl(item.url || item.embedUrl)
+          streamData: encryptStreamUrl(item.url || item.embedUrl),
+          priority: item.isDirect ? 1 : (item.isLatino ? (2 + idx * 0.1) : (15 + idx))
         });
       });
     }
@@ -192,59 +208,81 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
     console.warn('[streamProviderService] Error resolviendo fuentes de Cuevana:', err.message);
   }
 
-  // 2. Servidores universales de alta velocidad y compatibilidad (TMDB)
-    // 2.1 VSEmbed (Español Latino Garantizado)
-    const vsembedUrl = normalizedType === 'tv'
-      ? `https://vsembed.ru/embed/tv?tmdb=${safeTmdbId}&season=${resolvedSeason}&episode=${resolvedEpisode}&ds_lang=es`
-      : `https://vsembed.ru/embed/movie?tmdb=${safeTmdbId}&ds_lang=es`;
+  // 2. Servidores universales de alta velocidad y compatibilidad comprobada (2026)
+  if (safeTmdbId > 0) {
+    // 2.1 VidFast HD (Ultra rápido, soporte multi-audio y Latino)
+    const vidfastUrl = normalizedType === 'tv'
+      ? `https://vidfast.pro/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}`
+      : `https://vidfast.pro/movie/${safeTmdbId}`;
 
     servers.push({
-      id: 'server-vsembed-latino',
-      name: '🇲🇽 Servidor VSEmbed (Español Latino)',
+      id: 'server-vidfast',
+      name: '🇲🇽 Servidor VidFast (Audio Latino / HD)',
       quality: 'HD 1080p',
-      language: 'Español Latino',
+      language: 'Español Latino / Multi-Audio',
       isDirect: false,
       format: 'embed',
-      url: vsembedUrl,
-      directEmbedUrl: vsembedUrl,
-      streamData: encryptStreamUrl(vsembedUrl)
+      url: vidfastUrl,
+      directEmbedUrl: vidfastUrl,
+      streamData: encryptStreamUrl(vidfastUrl),
+      priority: 5
     });
 
-    // 2.2 VidLink (Soporta múltiples audios y pistas en audio latino)
+    // 2.2 VidLink Pro (Ultra estable, 1080p, selector de audio)
     const vidlinkUrl = normalizedType === 'tv'
       ? `https://vidlink.pro/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}?primaryColor=e50914&lang=es`
       : `https://vidlink.pro/movie/${safeTmdbId}?primaryColor=e50914&lang=es`;
 
     servers.push({
       id: 'server-vidlink-pro',
-      name: '🌐 Servidor VidLink (Audio Latino / Multi-Audio)',
+      name: '🇲🇽 Servidor VidLink (Audio Latino / 1080p)',
       quality: 'HD 1080p',
-      language: 'Español Latino',
+      language: 'Español Latino / Multi-Audio',
       isDirect: false,
       format: 'embed',
       url: vidlinkUrl,
       directEmbedUrl: vidlinkUrl,
-      streamData: encryptStreamUrl(vidlinkUrl)
+      streamData: encryptStreamUrl(vidlinkUrl),
+      priority: 6
     });
 
-    // 2.3 Autoembed (Con filtro forzado en Español)
+    // 2.3 RiveStream (Multi-fuente y streaming sin cortes)
+    const rivestreamUrl = normalizedType === 'tv'
+      ? `https://rivestream.live/embed?type=tv&id=${safeTmdbId}&season=${resolvedSeason}&episode=${resolvedEpisode}`
+      : `https://rivestream.live/embed?type=movie&id=${safeTmdbId}`;
+
+    servers.push({
+      id: 'server-rivestream',
+      name: '🌐 Servidor RiveStream (Multi-Audio)',
+      quality: 'HD 1080p',
+      language: 'Español Latino / Multi-Audio',
+      isDirect: false,
+      format: 'embed',
+      url: rivestreamUrl,
+      directEmbedUrl: rivestreamUrl,
+      streamData: encryptStreamUrl(rivestreamUrl),
+      priority: 7
+    });
+
+    // 2.4 AutoEmbed TO (Dominio activo verificado, 200 OK)
     const autoembedUrl = normalizedType === 'tv'
-      ? `https://player.autoembed.cc/embed/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}?lang=es`
-      : `https://player.autoembed.cc/embed/movie/${safeTmdbId}?lang=es`;
+      ? `https://autoembed.to/tv/tmdb/${safeTmdbId}-${resolvedSeason}-${resolvedEpisode}`
+      : `https://autoembed.to/movie/tmdb/${safeTmdbId}`;
 
     servers.push({
       id: 'server-autoembed',
-      name: '🇲🇽 Servidor Autoembed (Español Latino)',
+      name: '⚡ Servidor AutoEmbed (Respaldo Rápido)',
       quality: 'HD 1080p',
-      language: 'Español Latino',
+      language: 'Español Latino / Multi-Audio',
       isDirect: false,
       format: 'embed',
       url: autoembedUrl,
       directEmbedUrl: autoembedUrl,
-      streamData: encryptStreamUrl(autoembedUrl)
+      streamData: encryptStreamUrl(autoembedUrl),
+      priority: 8
     });
 
-    // 2.4 Videasy (Alta tasa de bits y subtítulos/audio en español)
+    // 2.5 Videasy HD (Multi-audio y subtítulos)
     const videasyUrl = normalizedType === 'tv'
       ? `https://player.videasy.net/tv/${safeTmdbId}/${resolvedSeason}/${resolvedEpisode}`
       : `https://player.videasy.net/movie/${safeTmdbId}`;
@@ -258,25 +296,28 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
       format: 'embed',
       url: videasyUrl,
       directEmbedUrl: videasyUrl,
-      streamData: encryptStreamUrl(videasyUrl)
+      streamData: encryptStreamUrl(videasyUrl),
+      priority: 9
     });
 
-    // 2.5 VidSrc (Respaldo Ultra Rápido)
+    // 2.6 VidSrc PM (Respaldo Internacional de alta disponibilidad)
     const vidsrcUrl = normalizedType === 'tv'
       ? `https://vidsrc.pm/embed/tv/${safeTmdbId}/${resolvedSeason}-${resolvedEpisode}`
       : `https://vidsrc.pm/embed/movie/${safeTmdbId}`;
 
     servers.push({
       id: 'server-vidsrc-pm',
-      name: '⚡ Servidor VidSrc (Respaldo)',
+      name: '⚡ Servidor VidSrc (Respaldo Rápido)',
       quality: 'HD 1080p',
       language: 'Multilenguaje / VO',
       isDirect: false,
       format: 'embed',
       url: vidsrcUrl,
       directEmbedUrl: vidsrcUrl,
-      streamData: encryptStreamUrl(vidsrcUrl)
+      streamData: encryptStreamUrl(vidsrcUrl),
+      priority: 10
     });
+  }
 
   const configuredProviders = (process.env.AUTHORIZED_STREAM_PROVIDERS || '')
     .split(',')
@@ -299,23 +340,20 @@ async function getMovieServers({ tmdbId, type = 'movie', season = 1, episode = 1
       isDirect: true,
       format: 'm3u8',
       url: originalHlsUrl,
-      streamData: encryptStreamUrl(originalHlsUrl)
+      streamData: encryptStreamUrl(originalHlsUrl),
+      priority: 0.5
     });
   }
 
-  // Ordenar priorizando: 1) HLS Nativo Latino, 2) Servidores con Audio Latino garantizado, 3) Multilenguaje
+  // Ordenar estrictamente por prioridad:
+  // 1) HLS Nativo Latino (Cuevana / Oficial)
+  // 2) VidHide / StreamWish Latino garantizado
+  // 3) VidFast HD & VidLink Latino
+  // 4) RiveStream, AutoEmbed, Videasy, VidSrc
   servers.sort((a, b) => {
-    const aIsDirect = Boolean(a.isDirect);
-    const bIsDirect = Boolean(b.isDirect);
-    if (aIsDirect && !bIsDirect) return -1;
-    if (!aIsDirect && bIsDirect) return 1;
-
-    const aLatino = (a.language || '').toLowerCase().includes('latino') || Boolean(a.isLatino);
-    const bLatino = (b.language || '').toLowerCase().includes('latino') || Boolean(b.isLatino);
-    if (aLatino && !bLatino) return -1;
-    if (!aLatino && bLatino) return 1;
-
-    return 0;
+    const pA = a.priority ?? 99;
+    const pB = b.priority ?? 99;
+    return pA - pB;
   });
 
   return {

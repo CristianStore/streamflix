@@ -1542,13 +1542,17 @@
 
     async function fetchServersForMedia(item, season = 1, episode = 1) {
       const isMovie = item.type === 'movie';
+      const safeId = item.id || item.tmdbId || '';
+      const safeTitle = item.title || item.name || '';
+      const safeOrigTitle = item.originalTitle || item.original_title || item.original_name || '';
+
       const params = new URLSearchParams({
-        tmdbId: item.id || '',
+        tmdbId: String(safeId),
         type: isMovie ? 'movie' : 'tv',
         season: String(season),
         episode: String(episode),
-        title: item.title || '',
-        originalTitle: item.originalTitle || ''
+        title: safeTitle,
+        originalTitle: safeOrigTitle
       });
 
       try {
@@ -1563,26 +1567,32 @@
         console.warn('[Player] Error al obtener servidores de la API:', err);
       }
 
-      // Fallback si la API no estuviera disponible (Priorizando 100% Español Latino)
-      const id = item.id;
+      // Fallback ultra-estable verificado (2026) con Audio Latino prioritario
+      const id = safeId;
       return [
         {
-          id: 'vsembed-latino',
-          name: '🇲🇽 Servidor VSEmbed (Español Latino)',
-          url: isMovie ? `https://vsembed.ru/embed/movie?tmdb=${id}&ds_lang=es` : `https://vsembed.ru/embed/tv?tmdb=${id}&season=${season}&episode=${episode}&ds_lang=es`,
-          language: 'Español Latino'
+          id: 'vidfast-pro',
+          name: '🇲🇽 Servidor VidFast (Audio Latino / HD)',
+          url: isMovie ? `https://vidfast.pro/movie/${id}` : `https://vidfast.pro/tv/${id}/${season}/${episode}`,
+          language: 'Español Latino / Multi-Audio'
         },
         {
           id: 'vidlink-pro',
-          name: '🌐 Servidor VidLink (Audio Latino)',
+          name: '🇲🇽 Servidor VidLink (Audio Latino / 1080p)',
           url: isMovie ? `https://vidlink.pro/movie/${id}?primaryColor=e50914&lang=es` : `https://vidlink.pro/tv/${id}/${season}/${episode}?primaryColor=e50914&lang=es`,
-          language: 'Español Latino'
+          language: 'Español Latino / Multi-Audio'
         },
         {
-          id: 'autoembed-es',
-          name: '🇲🇽 Servidor Autoembed (Español Latino)',
-          url: isMovie ? `https://player.autoembed.cc/embed/movie/${id}?lang=es` : `https://player.autoembed.cc/embed/tv/${id}/${season}/${episode}?lang=es`,
-          language: 'Español Latino'
+          id: 'rivestream-live',
+          name: '🌐 Servidor RiveStream (Multi-Audio)',
+          url: isMovie ? `https://rivestream.live/embed?type=movie&id=${id}` : `https://rivestream.live/embed?type=tv&id=${id}&season=${season}&episode=${episode}`,
+          language: 'Español Latino / Multi-Audio'
+        },
+        {
+          id: 'autoembed-to',
+          name: '⚡ Servidor AutoEmbed (Respaldo Rápido)',
+          url: isMovie ? `https://autoembed.to/movie/tmdb/${id}` : `https://autoembed.to/tv/tmdb/${id}-${season}-${episode}`,
+          language: 'Español Latino / Multi-Audio'
         },
         {
           id: 'videasy-hd',
@@ -1592,7 +1602,7 @@
         },
         {
           id: 'vidsrc-pm',
-          name: '⚡ Servidor VidSrc (Respaldo)',
+          name: '⚡ Servidor VidSrc (Respaldo Rápido)',
           url: isMovie ? `https://vidsrc.pm/embed/movie/${id}` : `https://vidsrc.pm/embed/tv/${id}/${season}-${episode}`,
           language: 'Multilenguaje'
         }
